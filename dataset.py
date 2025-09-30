@@ -21,6 +21,10 @@ class Dataset(object):
         history=clf.fit(X_train,y_train)
         return clf,history
 
+    def range(self):
+        return [ (np.amin(x_i),np.amax(x_i))
+                    for x_i in self.X.T]
+
 def read_csv(in_path:str):
     if(type(in_path)==tuple):
         X,y=in_path
@@ -32,3 +36,7 @@ def read_csv(in_path:str):
     X,y=raw[:,:-1],raw[:,-1]
     X= preprocessing.RobustScaler().fit_transform(X)
     return Dataset(X,y)
+
+if __name__ == '__main__':
+    data=read_csv("wine-quality-red")
+    print(data.range())
