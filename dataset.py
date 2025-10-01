@@ -21,6 +21,9 @@ class Dataset(object):
         history=clf.fit(X_train,y_train)
         return clf,history
 
+    def params_dict(self):
+        return {"n_cats":self.n_cats(),"dims":(self.dim(),)}
+
     def range(self):
         return [ (np.amin(x_i),np.amax(x_i))
                     for x_i in self.X.T]
