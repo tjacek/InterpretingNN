@@ -4,6 +4,28 @@ import keras
 from keras.layers import Concatenate,Dense,BatchNormalization
 from keras import Input, Model
 
+class MLP(object):
+    def __init__(self,params,model):
+        self.params=params
+        self.model=model
+
+    def fit(self,X,y):
+        y=tf.one_hot(y,depth=self.params['n_cats'])
+        return self.model.fit(x=X,
+                              y=y,
+                              #epochs=self.params['n_epochs'],
+                              callbacks=basic_callback(),
+                              verbose=False)
+    def predict(self,X):
+        y=self.model.predict(X,
+                             verbose=False)
+        return np.argmax(y,axis=1)
+
+def basic_callback():
+    return tf.keras.callbacks.EarlyStopping(monitor='accuracy', 
+                                            patience=15)
+
+
 def single_builder(params,
                    hyper_params=None,
                    class_dict=None):
@@ -26,7 +48,7 @@ def single_builder(params,
                   optimizer='adam',
                   metrics=['accuracy'],
                   jit_compile=False)
-    return model
+    return MLP(params,model)
 
 def nn_builder(params,
                hyper_params,

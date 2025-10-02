@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sklearn.metrics import accuracy_score
 from sklearn import preprocessing
 
 class Dataset(object):
@@ -21,12 +22,33 @@ class Dataset(object):
         history=clf.fit(X_train,y_train)
         return clf,history
 
+    def eval(self,train_index,test_index,clf,as_result=True):
+        clf,history=self.fit_clf(train_index,clf)
+        result=self.pred(test_index,clf)
+        return result,history
+    
+    def pred(self,test_index,clf):
+        if(test_index is None):
+            X_test,y_test=self.X,self.y
+        else:
+            X_test,y_test=self.X[test_index],self.y[test_index]
+        y_pred=clf.predict(X_test)
+        return Result(y_pred,y_test)
+
     def params_dict(self):
         return {"n_cats":self.n_cats(),"dims":(self.dim(),)}
 
     def range(self):
         return [ (np.amin(x_i),np.amax(x_i))
                     for x_i in self.X.T]
+
+class Result(object):
+    def __init__(self,y_pred,y_true):
+        self.y_pred=y_pred
+        self.y_true=y_true
+
+    def get_acc(self):
+        return accuracy_score(self.y_pred,self.y_true)
 
 def read_csv(in_path:str):
     if(type(in_path)==tuple):
