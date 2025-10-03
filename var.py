@@ -12,18 +12,35 @@ class RandomSample(object):
             X.append(x_i)
         return np.array(X).T
 
+    def iter_sampling( self,
+                        model,
+                        n_iters=10,
+                        n_samples=1000):
+        exp,var=[],[]
+        for i in range(n_iters):
+            x_i=self(n_samples)
+            y_prob=model.predict_proba(x_i)
+            exp_i=np.mean(y_prob,axis=0)
+            var_i=np.std(y_prob,axis=0)
+            exp.append(exp_i)
+            var.append(var_i)
+        return np.array(exp),np.array(var)
+
 def random_exp(in_path,p):
     data=dataset.read_csv(in_path)
     split=base.random_split(len(data),p=p)
     sampler=RandomSample(data.range())
-    X=sampler()
-    print(X.shape)
+#    X=sampler()
+#    print(X.shape)
     nn=deep.single_builder(params=data.params_dict())
     split=base.random_split(len(data),p=0.9)
     result,_=split.eval(data,nn)
-    y_prob=nn.predict_proba(X)
-    print(np.mean(y_prob,axis=0))
-    print(np.std(y_prob,axis=0))
+    E,Var=sampler.iter_sampling(nn)
+    print(E)
+    print(Var)
+#    y_prob=nn.predict_proba(X)
+#    print(np.mean(y_prob,axis=0))
+#    print(np.std(y_prob,axis=0))
 
 if __name__ == '__main__':
     random_exp("wine-quality-red",p=0.9)
