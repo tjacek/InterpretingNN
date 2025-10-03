@@ -13,13 +13,17 @@ class MLP(object):
         y=tf.one_hot(y,depth=self.params['n_cats'])
         return self.model.fit(x=X,
                               y=y,
-                              #epochs=self.params['n_epochs'],
+                              epochs=1000,
                               callbacks=basic_callback(),
                               verbose=False)
     def predict(self,X):
         y=self.model.predict(X,
                              verbose=False)
         return np.argmax(y,axis=1)
+    
+    def predict_proba(self,X):
+        return self.model.predict(X,
+                             verbose=False)
 
 def basic_callback():
     return tf.keras.callbacks.EarlyStopping(monitor='accuracy', 
@@ -70,5 +74,5 @@ def nn_builder(params,
     return x_i
 
 def default_hyperparams():
-    return {'layers':1, 'units_0':1,
+    return {'layers':1, 'units_0':2,
             'units_1':1,'batch':False}
