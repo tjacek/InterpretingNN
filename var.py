@@ -11,6 +11,15 @@ class RandomSample(object):
             x_i=np.random.uniform(max_i, min_i, n)
             X.append(x_i)
         return np.array(X).T
+    
+    def change(self,x,cord_i,n):
+        max_i,min_i=self.bounds[cord_i]
+        new_x=[]
+        for _ in range(n):
+            x_j=x.copy()
+            x_j[cord_i]=np.random(max_i,min_i)
+            new_x.append(x_j)
+        return np.array(x_j)
 
     def iter_sampling( self,
                         model,
@@ -30,8 +39,6 @@ def random_exp(in_path,p):
     data=dataset.read_csv(in_path)
     split=base.random_split(len(data),p=p)
     sampler=RandomSample(data.range())
-#    X=sampler()
-#    print(X.shape)
     nn=deep.single_builder(params=data.params_dict())
     split=base.random_split(len(data),p=0.9)
     result,_=split.eval(data,nn)
@@ -43,4 +50,4 @@ def random_exp(in_path,p):
 #    print(np.std(y_prob,axis=0))
 
 if __name__ == '__main__':
-    random_exp("wine-quality-red",p=0.9)
+    random_exp("mfeat-karh",p=0.9)
