@@ -12,12 +12,27 @@ class RandomSample(object):
             X.append(x_i)
         return np.array(X).T
     
+    def var_contr(self,model,n=1000):
+        x=self(n)
+        y=model.predict_proba(x)
+        all_sqr=[]
+        for i,x_i in enumerate(x):
+            delta_x_i=self.change(x,0,n)
+            delta_y_i=model.predict_proba(delta_x_i)
+            y_i=y[i]
+            for y_j in delta_y_i:
+                err=y_i-y_j
+#                print(err)
+                sqr_err=err**2
+                all_sqr.append(sqr_err)
+        print(np.mean(all_sqr,axis=0))
+
     def change(self,x,cord_i,n):
         max_i,min_i=self.bounds[cord_i]
         new_x=[]
         for _ in range(n):
             x_j=x.copy()
-            x_j[cord_i]=np.random(max_i,min_i)
+            x_j[cord_i]=np.random.uniform(max_i,min_i)
             new_x.append(x_j)
         return np.array(x_j)
 
@@ -42,12 +57,14 @@ def random_exp(in_path,p):
     nn=deep.single_builder(params=data.params_dict())
     split=base.random_split(len(data),p=0.9)
     result,_=split.eval(data,nn)
-    E,Var=sampler.iter_sampling(nn)
-    print(E)
-    print(Var)
+    sampler.var_contr(nn)
+#    E,Var=sampler.iter_sampling(nn)
+#    print(E)
+#    print(Var)
+
 #    y_prob=nn.predict_proba(X)
 #    print(np.mean(y_prob,axis=0))
 #    print(np.std(y_prob,axis=0))
 
 if __name__ == '__main__':
-    random_exp("mfeat-karh",p=0.9)
+    random_exp("wine-quality-red",p=0.9)
