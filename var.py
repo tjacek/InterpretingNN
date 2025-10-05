@@ -15,17 +15,22 @@ class RandomSample(object):
     def var_contr(self,model,n=1000):
         x=self(n)
         y=model.predict_proba(x)
-        all_sqr=[]
-        for i,x_i in enumerate(x):
-            delta_x_i=self.change(x,0,n)
-            delta_y_i=model.predict_proba(delta_x_i)
-            y_i=y[i]
-            for y_j in delta_y_i:
-                err=y_i-y_j
+        def helper(dim):
+            all_sqr=[]
+            for i,x_i in enumerate(x):
+                delta_x_i=self.change(x_i,dim,n)
+                delta_y_i=model.predict_proba(delta_x_i)
+                y_i=y[i]
+                for y_j in delta_y_i:
+                    err=y_i-y_j
 #                print(err)
-                sqr_err=err**2
-                all_sqr.append(sqr_err)
-        print(np.mean(all_sqr,axis=0))
+                    sqr_err=err**2
+                    all_sqr.append(sqr_err)
+            return np.mean(all_sqr,axis=0)
+        n_dims=x.shape[1]
+        print(f"Dims:{n_dims}")
+        for i in range(n_dims):
+            print(helper(i))
 
     def change(self,x,cord_i,n):
         max_i,min_i=self.bounds[cord_i]
@@ -34,7 +39,7 @@ class RandomSample(object):
             x_j=x.copy()
             x_j[cord_i]=np.random.uniform(max_i,min_i)
             new_x.append(x_j)
-        return np.array(x_j)
+        return np.array(new_x)
 
     def iter_sampling( self,
                         model,
