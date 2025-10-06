@@ -1,5 +1,8 @@
 import numpy as np 
 import base,dataset,deep
+from tqdm import tqdm
+import matplotlib.pyplot as plt
+import seaborn as sn
 
 class RandomSample(object):
     def __init__(self,bounds):
@@ -17,20 +20,23 @@ class RandomSample(object):
         y=model.predict_proba(x)
         def helper(dim):
             all_sqr=[]
-            for i,x_i in enumerate(x):
+            for i,x_i in enumerate(tqdm(x)):
                 delta_x_i=self.change(x_i,dim,n)
                 delta_y_i=model.predict_proba(delta_x_i)
                 y_i=y[i]
                 for y_j in delta_y_i:
                     err=y_i-y_j
-#                print(err)
                     sqr_err=err**2
                     all_sqr.append(sqr_err)
             return np.mean(all_sqr,axis=0)
         n_dims=x.shape[1]
         print(f"Dims:{n_dims}")
+        var_matrix=[]
         for i in range(n_dims):
-            print(helper(i))
+            var_i=helper(i)
+            var_matrix.append(var_i)
+            print(var_i)
+        heat_map(var_matrix)
 
     def change(self,x,cord_i,n):
         max_i,min_i=self.bounds[cord_i]
@@ -54,6 +60,12 @@ class RandomSample(object):
             exp.append(exp_i)
             var.append(var_i)
         return np.array(exp),np.array(var)
+
+def heat_map(var_matrix):
+    import seaborn as sn
+    sn.heatmap(var_matrix,cmap="YlGnBu",#linewidths=0.5,
+        annot=True,annot_kws={"size": 5}, fmt='g')
+    plt.show()
 
 def random_exp(in_path,p):
     data=dataset.read_csv(in_path)
