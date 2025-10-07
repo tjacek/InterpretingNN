@@ -90,6 +90,13 @@ def compute_var(in_path,out_path):
         np.savetxt(out_i, var_i, fmt='%f')
 #        heat_map(np.log(var_matrix))
 
+def show_heatmap(in_path):
+    for in_i in utils.top_files(in_path):
+        print(in_i)
+        var_i = np.loadtxt(in_i)
+        heat_map(var_i)
+
 if __name__ == '__main__':
-    compute_var("uci","var_matrix")
+#    compute_var("uci","var_matrix")
+    show_heatmap("var_matrix")
 #    random_exp("wine-quality-red",p=0.9)
