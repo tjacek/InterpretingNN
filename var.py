@@ -3,6 +3,7 @@ import base,dataset,deep
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import seaborn as sn
+import utils
 
 class RandomSample(object):
     def __init__(self,bounds):
@@ -78,5 +79,11 @@ def random_exp(in_path,p):
     result,_=split.eval(data,nn)
     sampler.var_contr(nn,in_path)
 
+def compute_var(in_path,out_path):
+    for in_i,out_i in utils.dir_paths(in_path,out_path):
+        print(in_i)
+        print(out_i)
+
 if __name__ == '__main__':
-    random_exp("wine-quality-red",p=0.9)
+    compute_var("uci","var_matrix")
+#    random_exp("wine-quality-red",p=0.9)
