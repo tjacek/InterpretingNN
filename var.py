@@ -15,7 +15,7 @@ class RandomSample(object):
             X.append(x_i)
         return np.array(X).T
     
-    def var_contr(self,model,n=1000):
+    def var_contr(self,model,out_path,n=1000):
         x=self(n)
         y=model.predict_proba(x)
         def helper(dim):
@@ -36,7 +36,9 @@ class RandomSample(object):
             var_i=helper(i)
             var_matrix.append(var_i)
             print(var_i)
-        heat_map(var_matrix)
+        var_matrix=np.array(var_matrix)
+        np.savetxt(f'{out_path}.txt', var_matrix, fmt='%f')
+        heat_map(np.log(var_matrix))
 
     def change(self,x,cord_i,n):
         max_i,min_i=self.bounds[cord_i]
@@ -74,14 +76,7 @@ def random_exp(in_path,p):
     nn=deep.single_builder(params=data.params_dict())
     split=base.random_split(len(data),p=0.9)
     result,_=split.eval(data,nn)
-    sampler.var_contr(nn)
-#    E,Var=sampler.iter_sampling(nn)
-#    print(E)
-#    print(Var)
-
-#    y_prob=nn.predict_proba(X)
-#    print(np.mean(y_prob,axis=0))
-#    print(np.std(y_prob,axis=0))
+    sampler.var_contr(nn,in_path)
 
 if __name__ == '__main__':
     random_exp("wine-quality-red",p=0.9)
