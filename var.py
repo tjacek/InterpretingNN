@@ -16,7 +16,7 @@ class RandomSample(object):
             X.append(x_i)
         return np.array(X).T
     
-    def var_contr(self,model,out_path,n=1000):
+    def var_contr(self,model,n=1000):
         x=self(n)
         y=model.predict_proba(x)
         def helper(dim):
@@ -37,9 +37,8 @@ class RandomSample(object):
             var_i=helper(i)
             var_matrix.append(var_i)
             print(var_i)
-        var_matrix=np.array(var_matrix)
-        np.savetxt(f'{out_path}.txt', var_matrix, fmt='%f')
-        heat_map(np.log(var_matrix))
+        return np.array(var_matrix)
+
 
     def change(self,x,cord_i,n):
         max_i,min_i=self.bounds[cord_i]
@@ -81,8 +80,15 @@ def random_exp(in_path,p):
 
 def compute_var(in_path,out_path):
     for in_i,out_i in utils.dir_paths(in_path,out_path):
+        data_i=dataset.read_csv(in_i)
+        split_i=base.random_split(len(data_i),p=0.9)
+        nn_i=deep.single_builder(params=data_i.params_dict())
+        result,_=split_i.eval(data_i,nn_i)
+        sampler_i=RandomSample(data_i.range())
         print(in_i)
-        print(out_i)
+        var_i=sampler_i.var_contr(nn_i)
+        np.savetxt(out_i, var_i, fmt='%f')
+#        heat_map(np.log(var_matrix))
 
 if __name__ == '__main__':
     compute_var("uci","var_matrix")
