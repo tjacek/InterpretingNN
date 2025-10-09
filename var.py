@@ -63,10 +63,11 @@ class RandomSample(object):
             var.append(var_i)
         return np.array(exp),np.array(var)
 
-def heat_map(var_matrix):
+def heat_map(var_matrix,name=""):
     import seaborn as sn
     sn.heatmap(var_matrix,cmap="YlGnBu",#linewidths=0.5,
         annot=True,annot_kws={"size": 5}, fmt='g')
+    plt.title(name)
     plt.show()
 
 def random_exp(in_path,p):
@@ -90,11 +91,16 @@ def compute_var(in_path,out_path):
         np.savetxt(out_i, var_i, fmt='%f')
 #        heat_map(np.log(var_matrix))
 
-def show_heatmap(in_path):
+def show_heatmap(in_path,norm=True):
     for in_i in utils.top_files(in_path):
         print(in_i)
         var_i = np.loadtxt(in_i)
-        heat_map(var_i)
+        if(norm):
+            var_i=[ var_j/np.sum(var_j) 
+                    for var_j in var_i.T]
+            var_i=np.array(var_i).T
+        name_i=in_i.split("/")[-1]
+        heat_map(var_i,name_i)
 
 if __name__ == '__main__':
 #    compute_var("uci","var_matrix")
