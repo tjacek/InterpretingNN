@@ -1,3 +1,4 @@
+import numpy as np
 import os,re
 
 def make_dir(path):
@@ -23,3 +24,10 @@ def dir_paths(in_path,out_path):
     for path_i in top_files(in_path):
         id_i=path_i.split("/")[-1]
         yield path_i,f"{out_path}/{id_i}"
+
+def gini(arr):
+    arr.sort()
+    arr=np.array(arr)
+    index = np.arange(1,arr.shape[0]+1)
+    n = arr.shape[0]     
+    return ((np.sum((2 * index - n  - 1) * arr)) / (n * np.sum(arr)))

@@ -91,18 +91,33 @@ def compute_var(in_path,out_path):
         np.savetxt(out_i, var_i, fmt='%f')
 #        heat_map(np.log(var_matrix))
 
-def show_heatmap(in_path,norm=True):
+def read_var(in_path):
     for in_i in utils.top_files(in_path):
-        print(in_i)
         var_i = np.loadtxt(in_i)
+        id_i=in_i.split("/")[-1]
+        yield id_i,var_i
+
+def show_heatmap(in_path,norm=False):
+    for id_i,var_i in read_var(in_path):
         if(norm):
             var_i=[ var_j/np.sum(var_j) 
                     for var_j in var_i.T]
             var_i=np.array(var_i).T
-        name_i=in_i.split("/")[-1]
-        heat_map(var_i,name_i)
+        heat_map(var_i,id_i)
+
+def show_gini(in_path,type="cats"):
+    for id_i,var_i in read_var(in_path):
+        print(id_i)
+        if(type=="cats"):
+#            var_i=np.sum(var_i,axis=0)
+            gini_i=[ utils.gini(var_j) 
+                      for var_j in var_i.T]
+        else:
+            var_i=var_i.flatten()
+            gini_i=utils.gini(var_i)
+        print(gini_i)
 
 if __name__ == '__main__':
 #    compute_var("uci","var_matrix")
-    show_heatmap("var_matrix")
+    show_gini("var_matrix")
 #    random_exp("wine-quality-red",p=0.9)
