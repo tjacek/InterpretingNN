@@ -42,6 +42,14 @@ class Dataset(object):
         return [ (np.amin(x_i),np.amax(x_i))
                     for x_i in self.X.T]
 
+    def weight_dict(self):
+        cats=  list(set(self.y))
+        n_cats= len(cats) 
+        params={cat_i:0 for cat_i in cats}
+        for y_i in y:
+            params[y_i]+=1
+        return params
+
 class Result(object):
     def __init__(self,y_pred,y_true):
         self.y_pred=y_pred
