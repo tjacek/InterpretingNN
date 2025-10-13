@@ -5,6 +5,17 @@ import matplotlib.pyplot as plt
 import seaborn as sn
 import utils
 
+class VarMatrix(object):
+    def __init__(self,arr):
+        self.arr=arr
+
+    def __call__(self,fun,mode="cats"):
+        if(mode=="cats"):
+            return [fun(arr_i) for arr_i in self.arr.T]
+        elif(mode=="feats"):
+            return [fun(arr_i) for arr_i in self.arr]
+        else:
+            return fun(self.arr.flatten())
 class RandomSample(object):
     def __init__(self,bounds):
         self.bounds=bounds
@@ -95,7 +106,7 @@ def read_var(in_path):
     for in_i in utils.top_files(in_path):
         var_i = np.loadtxt(in_i)
         id_i=in_i.split("/")[-1]
-        yield id_i,var_i
+        yield id_i,VarMatrix(var_i)
 
 def show_heatmap(in_path,norm=False):
     for id_i,var_i in read_var(in_path):
@@ -105,19 +116,22 @@ def show_heatmap(in_path,norm=False):
             var_i=np.array(var_i).T
         heat_map(var_i,id_i)
 
-def show_gini(in_path,type="cats"):
+def show_gini(in_path,mode="cats"):
     for id_i,var_i in read_var(in_path):
         print(id_i)
-        if(type=="cats"):
-#            var_i=np.sum(var_i,axis=0)
-            gini_i=[ utils.gini(var_j) 
-                      for var_j in var_i.T]
-        else:
-            var_i=var_i.flatten()
-            gini_i=utils.gini(var_i)
-        print(gini_i)
+        print(var_i(utils.gini,mode))
+
+def show_stats(in_path,mode=None):
+    stat_fun={ "max_fun":lambda x: np.amax(np.log(x)),
+               "mean_fun":lambda x: np.mean(np.log(x)),
+               "min_fun":lambda x: np.amin(np.log(x))
+             }
+    for id_i,var_i in read_var(in_path):
+        print(id_i)
+        for name_j,fun_j in stat_fun.items():
+            print(f"{name_j}:{var_i(fun_j,mode)}")
 
 if __name__ == '__main__':
 #    compute_var("uci","var_matrix")
-    show_gini("var_matrix")
+    show_stats("var_matrix",None)
 #    random_exp("wine-quality-red",p=0.9)
