@@ -4,16 +4,34 @@ import keras
 from keras.layers import Concatenate,Dense,BatchNormalization
 from keras import Input, Model
 
+def make_mlp(data):
+    params=data.params_dict()
+    model=single_builder(params=params)
+    return MLP(params=params,
+               model=model,
+               class_weight=None)
+
+def make_balanced_mlp(data):
+    params=data.params_dict()
+    model=single_builder(params=params)
+    return MLP(params=params,
+               model=model,
+               class_weight=data.weight_dict())
+
 class MLP(object):
-    def __init__(self,params,model):
+    def __init__( self,
+                  params,
+                  model,
+                  class_weight=None):
         self.params=params
         self.model=model
+        self.class_weight=class_weight
 
     def fit(self,X,y):
         y=tf.one_hot(y,depth=self.params['n_cats'])
         return self.model.fit(x=X,
                               y=y,
-                              class_weight=self.params['class_weight'],
+                              class_weight=self.class_weight,
                               epochs=1000,
                               callbacks=basic_callback(),
                               verbose=False)
@@ -51,7 +69,7 @@ def single_builder(params,
                   optimizer='adam',
                   metrics=['accuracy'],
                   jit_compile=False)
-    return MLP(params,model)
+    return model
 
 def nn_builder(params,
                hyper_params,
