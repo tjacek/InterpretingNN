@@ -13,6 +13,7 @@ class MLP(object):
         y=tf.one_hot(y,depth=self.params['n_cats'])
         return self.model.fit(x=X,
                               y=y,
+                              class_weight=self.params['class_weight'],
                               epochs=1000,
                               callbacks=basic_callback(),
                               verbose=False)
@@ -36,8 +37,6 @@ def single_builder(params,
     input_layer = Input(shape=(params['dims']))
     if(hyper_params is None):
         hyper_params=default_hyperparams()
-#    if(class_dict is None):
-#        class_dict=params['class_weights']
     nn=nn_builder(params=params,
                     hyper_params=hyper_params,
                     input_layer=input_layer,

@@ -36,7 +36,8 @@ class Dataset(object):
         return Result(y_pred,y_test)
 
     def params_dict(self):
-        return {"n_cats":self.n_cats(),"dims":(self.dim(),)}
+        return {"n_cats":self.n_cats(),"dims":(self.dim(),),
+                "class_weight":self.weight_dict()}
 
     def range(self):
         return [ (np.amin(x_i),np.amax(x_i))
@@ -46,7 +47,7 @@ class Dataset(object):
         cats=  list(set(self.y))
         n_cats= len(cats) 
         params={cat_i:0 for cat_i in cats}
-        for y_i in y:
+        for y_i in self.y:
             params[y_i]+=1
         return params
 
