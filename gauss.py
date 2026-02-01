@@ -8,6 +8,9 @@ class Node(object):
 	thres:float
 	left:int
 	right:int
+    
+    def is_leaf(self):
+        return False	
 
     def __call__(self,x_i):
     	feat_i=x_i[self.feat]
@@ -16,6 +19,17 @@ class Node(object):
     	else:
     		return self.right
 
+    @classmethod
+    def random(cls,dims=100):
+        feats=random.randint(dims)
+        thres=float(random.randint(2)-1)
+         
+@dataclass
+class Leaf(object):
+    cat:int
+
+    def is_leaf(self):
+        return True	
 
 class Tree(object):
 	def __init__(self,nodes):
