@@ -44,6 +44,9 @@ class Tree(object):
                  nodes):
         self.root=root
         self.nodes=nodes
+
+    def __len__(self):
+        return len(self.nodes)
     
     def __call__(self,x):
         node=self.root
@@ -83,6 +86,24 @@ def gen_data(n,dims=100):
     	                  scale=1, 
     	                  size=(n, dims))
 
+def count_outliners(x):
+    lower=(x<(-3)).astype(int)
+    higher=(x>3).astype(int)
+    return np.sum(higher)+np.sum(lower)
 
-tree=Tree.random()
-print(tree)
+def make_dataset(n=1000,
+                 n_cats=3,
+                 dims=100):
+    X=gen_data(n,dims)
+    tree=Tree.random(levels=3,
+                n_cats=n_cats,
+                dims=dims)
+    def helper(x_i):
+        c_i=count_outliners(x_i)
+        if(c_i>0):
+            return n_cats +(c_i % 2)-1
+        return tree(x_i)
+    y=[ helper(x_i) for x_i in X]
+    print(y)
+
+make_dataset()
