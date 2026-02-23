@@ -1,7 +1,18 @@
 import numpy as np
 from numpy import random
 from dataclasses import dataclass
+from collections import Counter
 import itertools
+
+class Ensemble(object):
+    def __init__(self,trees):
+        self.trees=trees
+
+    def __call__(self,x):
+        votes=[tree_i(x) 
+                for tree_i in self.trees]
+        vote_count = Counter(votes)
+        return vote_count.most_common(1)[0][0]
 
 @dataclass
 class Node(object):
@@ -13,7 +24,7 @@ class Node(object):
     def is_leaf(self):
         return False	
 
-    def __call__(self,x_i):
+    def next(self,x_i):
         feat_i=x_i[self.feat]
         if(feat_i< self.thres):
             return self.left
@@ -51,7 +62,7 @@ class Tree(object):
     def __call__(self,x):
         node=self.root
         while(not node.is_leaf()):
-            node=node(x)
+            node=node.next(x)
         return node.cat
 
     @classmethod
