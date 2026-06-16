@@ -36,24 +36,29 @@ class Dataset(object):
         return Result(y_pred,y_test)
 
     def params_dict(self):
-        return {"n_cats":self.n_cats(),"dims":(self.dim(),)}
+        return { "n_cats":self.n_cats(),
+                 "dims":(self.dim(),),
+                 "n_samples":len(self)}
 #                "class_weight":self.weight_dict()}
 
     def range(self):
         return [ (np.amin(x_i),np.amax(x_i))
                     for x_i in self.X.T]
 
-    def weight_dict(self):
+    def class_sizes(self):
         cats=  list(set(self.y))
         n_cats= len(cats) 
         params={cat_i:0 for cat_i in cats}
         for y_i in self.y:
             params[y_i]+=1
-#        total_value=sum(list(pandas.values()))
-        params={key_i:float(value_i) 
-                   for key_i,value_i in params.items()}
+#        params={key_i:float(value_i) 
+#                   for key_i,value_i in params.items()}
         return params
 
+    def IR(self):
+        sizes=self.class_sizes()
+        values=list(sizes.values())
+        return max(values)/min(values)
 class Result(object):
     def __init__(self,y_pred,y_true):
         self.y_pred=y_pred
@@ -76,4 +81,4 @@ def read_csv(in_path:str):
 
 if __name__ == '__main__':
     data=read_csv("wine-quality-red")
-    print(data.range())
+    print(data.IR())
