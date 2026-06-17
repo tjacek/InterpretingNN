@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score
 from sklearn import preprocessing
+from sklearn.decomposition import PCA
 
 class Dataset(object):
     def __init__(self,X,y=None):
@@ -51,14 +52,23 @@ class Dataset(object):
         params={cat_i:0 for cat_i in cats}
         for y_i in self.y:
             params[y_i]+=1
-#        params={key_i:float(value_i) 
-#                   for key_i,value_i in params.items()}
         return params
 
     def IR(self):
         sizes=self.class_sizes()
         values=list(sizes.values())
         return max(values)/min(values)
+    
+    def pca_feats(self):
+        pca = PCA(n_components=None)
+        pca.fit(self.X)
+        exp_var=pca.explained_variance_ratio_
+        greatest=exp_var[0]
+        cum_var=np.cumsum(exp_var)
+        int_var=(cum_var>0.95).astype(int)
+        thres_var= np.argmax(int_var)/cum_var.shape[0]
+        return greatest,thres_var
+
 class Result(object):
     def __init__(self,y_pred,y_true):
         self.y_pred=y_pred
@@ -80,5 +90,5 @@ def read_csv(in_path:str):
     return Dataset(X,y)
 
 if __name__ == '__main__':
-    data=read_csv("wine-quality-red")
-    print(data.IR())
+    data=read_csv("uci/satimage")
+    print(data.pca_feats())
