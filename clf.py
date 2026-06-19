@@ -1,0 +1,24 @@
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import GradientBoostingClassifier
+
+class Clf(object):
+    def fit(self,X,y):
+        return self.model.fit(X,y)
+
+    def predict(self,X):
+        return self.model.predict(X)
+    
+    def __str__(self):
+    	return self.NAME
+    
+    def __repr__(self):
+    	return self.NAME
+
+class RF(Clf):
+    NAME="RF"
+    def __init__(self):
+        self.model=RandomForestClassifier(class_weight="balanced") 
+
+clf=RF()
+print(str(clf))
