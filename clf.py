@@ -20,5 +20,14 @@ class RF(Clf):
     def __init__(self):
         self.model=RandomForestClassifier(class_weight="balanced") 
 
+class GRAD(Clf):
+    NAME="GRAD"
+    def __init__(self):
+        self.model=GradientBoostingClassifier()
+
+class LR(Clf):
+    NAME="LR"
+    def __init__(self):
+        self.model=LogisticRegression(solver='liblinear')
 clf=RF()
 print(str(clf))
