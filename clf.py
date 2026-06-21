@@ -3,6 +3,11 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import GradientBoostingClassifier
 
 class Clf(object):
+    @staticmethod
+    def to_dict(clf_types):
+        return { type_i.NAME:type_i 
+                    for type_i in clf_types}
+    
     def fit(self,X,y):
         return self.model.fit(X,y)
 
