@@ -1,6 +1,7 @@
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn import svm
 
 class Clf(object):
     @staticmethod
@@ -34,5 +35,11 @@ class LR(Clf):
     NAME="LR"
     def __init__(self):
         self.model=LogisticRegression(solver='liblinear')
+
+class SVM(object):
+    NAME="SVM"
+    def __init__(self):
+        self.model=svm.SVC(kernel='rbf')
+
 clf=RF()
 print(str(clf))
