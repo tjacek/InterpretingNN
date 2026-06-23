@@ -76,6 +76,19 @@ class Result(object):
 
     def get_acc(self):
         return accuracy_score(self.y_pred,self.y_true)
+  
+    def save(self,out_path):
+        y_pair=np.array([self.y_pred,self.y_true])
+        np.savez(out_path,y_pair)
+    
+    @classmethod
+    def read(cls,in_path:str):
+        if(type(in_path)==Result):
+            return in_path
+        raw=list(np.load(in_path).values())[0]
+        y_pred,y_true=raw[0],raw[1]
+        return cls( y_pred=y_pred,
+                    y_true=y_true)
 
 def read_csv(in_path:str):
     if(type(in_path)==tuple):

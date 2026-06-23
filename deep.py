@@ -3,29 +3,27 @@ import tensorflow as tf
 import keras
 from keras.layers import Concatenate,Dense,BatchNormalization
 from keras import Input, Model
+import clf
+
 
 def make_mlp(data):
     params=data.params_dict()
-    model=single_builder(params=params)
     return MLP(params=params,
-               model=model,
                class_weight=None)
 
 def make_balanced_mlp(data):
     params=data.params_dict()
-    model=single_builder(params=params)
     return MLP(params=params,
-               model=model,
                class_weight=data.weight_dict())
 
-class MLP(object):
+class MLP(clf.Clf):
+    NAME="MLP"
     def __init__( self,
                   params,
-                  model,
                   class_weight=None):
         self.params=params
-        self.model=model
         self.class_weight=class_weight
+        self.model=model_builder(params,class_weight)
 
     def fit(self,X,y):
         y=tf.one_hot(y,depth=self.params['n_cats'])
@@ -49,7 +47,7 @@ def basic_callback():
                                             patience=15)
 
 
-def single_builder(params,
+def model_builder(params,
                    hyper_params=None,
                    class_dict=None):
     input_layer = Input(shape=(params['dims']))
