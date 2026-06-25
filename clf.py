@@ -5,7 +5,9 @@ from sklearn import svm
 
 class Clf(object):
     @staticmethod
-    def to_dict(clf_types):
+    def to_dict(clf_types=None):
+        if(clf_types is None):
+            clf_types=[RF,GRAD,LR,SVM]
         return { type_i.NAME:type_i 
                     for type_i in clf_types}
     
