@@ -7,13 +7,17 @@ def basic_exp(in_path):
         data_i=dataset.read_csv(path_i)
         split_i=dataset.Split.random(data_i,p=0.9)
         for name_j,clf_type_j in clf_types.items(): 
+            print(name_j)
             clf_j=clf_type_j()
-            print(clf_j)
+            split_i.fit_clf(data_i,clf_j)
+            result_j=split_i.pred(data_i,clf_j)
+
+            print(result_j.get_acc())
 
 if __name__ == '__main__':
     basic_exp("uci")
 #    data=dataset.read_csv("spatial/wine-quality-red")
-#    split=base.random_split(len(data),p=0.9)
+#    split=base.random_split(len(data)wine,p=0.9)
 #    nn=deep.make_mlp(data)
 #    result,_=split.eval(data,nn)
 #    print(f"Unbalanced:{result.get_acc():.4f}")

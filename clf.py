@@ -38,7 +38,7 @@ class LR(Clf):
     def __init__(self):
         self.model=LogisticRegression(solver='liblinear')
 
-class SVM(object):
+class SVM(Clf):
     NAME="SVM"
     def __init__(self):
         self.model=svm.SVC(kernel='rbf')
