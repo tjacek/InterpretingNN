@@ -2,13 +2,21 @@ import numpy as np
 from sklearn.model_selection import RepeatedStratifiedKFold
 
 class SplitGroup(object):
-    def __init__(self,splits):#n_splits,n_repeats):
+    def __init__(self,splits,n_repeats):
         self.splits=splits
- #       self.n_splits=n_splits
- #       self.n_repeats=n_repeats
+        self.n_repeats=n_repeats
     
     def __len__(self):
         return len(self.splits)
+
+    def __call__(self,data,clf_type):
+        all_results=[]
+        for split_i in self.splits:
+            clf_i=clf_type()
+            split_i.fit_clf(data,clf_i)
+            result_i=split_i.pred(data,clf_i)
+            all_results.append(result_i)
+        return all_results
 
     @classmethod
     def get_split( cls,
@@ -56,3 +64,24 @@ class Split(object):
         train,test=np.array(train),np.array(test)
         return cls( train_index=train,
                     test_index=test)
+
+class Result(object):
+    def __init__(self,y_pred,y_true):
+        self.y_pred=y_pred
+        self.y_true=y_true
+
+    def get_acc(self):
+        return accuracy_score(self.y_pred,self.y_true)
+  
+    def save(self,out_path):
+        y_pair=np.array([self.y_pred,self.y_true])
+        np.savez(out_path,y_pair)
+    
+    @classmethod
+    def read(cls,in_path:str):
+        if(type(in_path)==Result):
+            return in_path
+        raw=list(np.load(in_path).values())[0]
+        y_pred,y_true=raw[0],raw[1]
+        return cls( y_pred=y_pred,
+                    y_true=y_true)
