@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score
 from sklearn import preprocessing
 from sklearn.decomposition import PCA
+import base
 
 class Dataset(object):
     def __init__(self,X,y=None):
@@ -34,7 +34,7 @@ class Dataset(object):
         else:
             X_test,y_test=self.X[test_index],self.y[test_index]
         y_pred=clf.predict(X_test)
-        return Result(y_pred,y_test)
+        return base.Result(y_pred,y_test)
 
     def params_dict(self):
         return { "n_cats":self.n_cats(),
@@ -68,60 +68,6 @@ class Dataset(object):
         int_var=(cum_var>0.95).astype(int)
         thres_var= np.argmax(int_var)/cum_var.shape[0]
         return greatest,thres_var
-
-class Split(object):
-    def __init__(self,train_index,test_index):
-        self.train_index=train_index
-        self.test_index=test_index
-    
-    def fit_clf(self,data,clf):
-        return data.fit_clf(self.train_index,clf)
-
-    def pred(self,data,clf):
-        return data.pred(self.test_index,
-                         clf=clf)
-
-    def save(self,out_path):
-        return np.savez(out_path,self.train_index,self.test_index)
-
-    def __str__(self):
-        train_size=self.train_index.shape[0]
-        test_size=self.test_index.shape[0]
-        return f"train:{train_size},test:{test_size}"     
-    
-    @classmethod
-    def random(cls,n_samples,p=0.9):
-        if(type(n_samples)==Dataset):
-            n_samples=len(n_samples)
-        train,test=[],[]
-        for i in range(n_samples):
-            if(np.random.rand()<p):
-                train.append(i)
-            else:
-                test.append(i)
-        train,test=np.array(train),np.array(test)
-        return cls( train_index=train,
-                    test_index=test)
-class Result(object):
-    def __init__(self,y_pred,y_true):
-        self.y_pred=y_pred
-        self.y_true=y_true
-
-    def get_acc(self):
-        return accuracy_score(self.y_pred,self.y_true)
-  
-    def save(self,out_path):
-        y_pair=np.array([self.y_pred,self.y_true])
-        np.savez(out_path,y_pair)
-    
-    @classmethod
-    def read(cls,in_path:str):
-        if(type(in_path)==Result):
-            return in_path
-        raw=list(np.load(in_path).values())[0]
-        y_pred,y_true=raw[0],raw[1]
-        return cls( y_pred=y_pred,
-                    y_true=y_true)
 
 def read_csv(in_path:str):
     if(type(in_path)==tuple):

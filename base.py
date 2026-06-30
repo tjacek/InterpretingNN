@@ -1,4 +1,6 @@
 import numpy as np
+from tqdm import tqdm
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import RepeatedStratifiedKFold
 
 class SplitGroup(object):
@@ -11,25 +13,25 @@ class SplitGroup(object):
 
     def __call__(self,data,clf_type):
         all_results=[]
-        for split_i in self.splits:
+        for split_i in tqdm(self.splits):
             clf_i=clf_type()
             split_i.fit_clf(data,clf_i)
             result_i=split_i.pred(data,clf_i)
             all_results.append(result_i)
-        return all_results
+        return ResultGroup(all_results)
 
     @classmethod
     def get_split( cls,
                    data,
                    n_repeats=1,
                    n_splits=10):
-        rskf=RepeatedStratifiedKFold(n_repeats=self.n_repeats, 
-                                     n_splits=self.n_splits, 
+        rskf=RepeatedStratifiedKFold(n_repeats=n_repeats, 
+                                     n_splits=n_splits, 
                                      random_state=0)
         splits=[]
         for train_index,test_index in rskf.split(data.X,data.y):
             splits.append(Split(train_index,test_index))
-        return cls(splits)
+        return cls(splits,n_repeats)
 
 class Split(object):
     def __init__(self,train_index,test_index):
@@ -85,3 +87,12 @@ class Result(object):
         y_pred,y_true=raw[0],raw[1]
         return cls( y_pred=y_pred,
                     y_true=y_true)
+
+class ResultGroup(object):
+    def __init__(self,indiv_result):
+        self.indiv_result=indiv_result
+
+    def get_acc(self):
+        acc=[ result_i.get_acc() 
+                for result_i in self.indiv_result]
+        return np.mean(acc)
