@@ -1,3 +1,4 @@
+import pandas as pd
 import base,clf,dataset,deep,utils
 
 def basic_exp(in_path):
@@ -34,11 +35,19 @@ def make_models(in_path,out_path):
 
 def show_pred(in_path):
     reader=base.ResultGroup.read
-    for path_i in utils.top_files(in_path):
+    for id_i,path_i in utils.iter_files(in_path):
+        lines=[]
         for id_j,path_j in utils.iter_files(path_i):
             if(id_j!="splits"):
                 result=reader(f"{path_j}/results")
-                print(result.get_acc())
+                lines.append([id_i,id_j,result.get_acc()])
+        df=pd.DataFrame.from_records(lines,
+                                columns=["data","clf","acc"])
+        acc=df["acc"].tolist()
+        min_acc=min(acc)
+        delta_acc= max(acc)-min_acc
+        df["norm_acc"]=df["acc"].apply(lambda acc: (acc-min_acc)/delta_acc)
+        print(df)
 
 if __name__ == '__main__':
     show_pred("output")

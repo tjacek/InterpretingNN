@@ -81,6 +81,21 @@ def read_csv(in_path:str):
     X= preprocessing.RobustScaler().fit_transform(X)
     return Dataset(X,y)
 
+def make_df(helper,
+            iterable,
+            cols,
+            multi=False):
+    lines=[]
+    if(multi):
+        for arg_i in iterable:
+            lines+=helper(arg_i)
+    else:
+        for arg_i in iterable:
+            lines.append(helper(arg_i))
+    df=pd.DataFrame.from_records(lines,
+                                columns=cols)
+    return df 
+
 if __name__ == '__main__':
     data=read_csv("uci/satimage")
     print(data.pca_feats())

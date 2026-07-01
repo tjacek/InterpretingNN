@@ -42,6 +42,3 @@ class SVM(Clf):
     NAME="SVM"
     def __init__(self):
         self.model=svm.SVC(kernel='rbf')
-
-clf=RF()
-print(str(clf))
