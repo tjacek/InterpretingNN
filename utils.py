@@ -17,6 +17,18 @@ def iter_files(path):
     for file_i in os.listdir(path):
         yield  file_i,f'{path}/{file_i}'
 
+def filtered_files(path,taboo):
+    if(type(taboo)==str):
+        taboo=[taboo]
+    if(type(taboo)==list):
+        taboo=set(taboo)
+    paths=[]
+    for file_i in os.listdir(path):
+        if(not file_i in taboo):
+            paths.append(f'{path}/{file_i}')
+    paths=sorted(paths,key=natural_keys)
+    return paths    
+
 def natural_keys(text):
     return [ atoi(c) for c in re.split('(\\d+)', text) ]
 

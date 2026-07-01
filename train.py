@@ -36,13 +36,14 @@ def make_models(in_path,out_path):
 def show_pred(in_path):
     reader=base.ResultGroup.read
     for id_i,path_i in utils.iter_files(in_path):
-        lines=[]
-        for id_j,path_j in utils.iter_files(path_i):
-            if(id_j!="splits"):
-                result=reader(f"{path_j}/results")
-                lines.append([id_i,id_j,result.get_acc()])
-        df=pd.DataFrame.from_records(lines,
-                                columns=["data","clf","acc"])
+        paths=utils.filtered_files(path_i,"splits")
+        def helper(path_i):
+            clf_i=path_i.split("/")[-1]
+            result=reader(f"{path_i}/results")
+            return [id_i,clf_i,result.get_acc()]
+        df=dataset.make_df(helper,
+                           iterable=paths,
+                           cols=["data","clf","acc"])
         acc=df["acc"].tolist()
         min_acc=min(acc)
         delta_acc= max(acc)-min_acc
