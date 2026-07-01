@@ -2,9 +2,10 @@ import numpy as np
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import RepeatedStratifiedKFold
+import utils
 
 class SplitGroup(object):
-    def __init__(self,splits,n_repeats):
+    def __init__(self,splits,n_repeats=1):
         self.splits=splits
         self.n_repeats=n_repeats
     
@@ -21,10 +22,10 @@ class SplitGroup(object):
         return ResultGroup(all_results)
 
     @classmethod
-    def get_split( cls,
-                   data,
-                   n_repeats=1,
-                   n_splits=10):
+    def make( cls,
+              data,
+              n_repeats=1,
+              n_splits=10):
         rskf=RepeatedStratifiedKFold(n_repeats=n_repeats, 
                                      n_splits=n_splits, 
                                      random_state=0)
@@ -32,6 +33,11 @@ class SplitGroup(object):
         for train_index,test_index in rskf.split(data.X,data.y):
             splits.append(Split(train_index,test_index))
         return cls(splits,n_repeats)
+    
+    def save(self,out_path):
+        utils.make_dir(out_path)
+        for i,split_i in enumerate(self.splits):
+            split_i.save(f"{out_path}/{i}")
 
 class Split(object):
     def __init__(self,train_index,test_index):
@@ -66,6 +72,9 @@ class Split(object):
         train,test=np.array(train),np.array(test)
         return cls( train_index=train,
                     test_index=test)
+    
+    def save(self,out_path):
+        return np.savez(out_path,self.train_index,self.test_index)
 
 class Result(object):
     def __init__(self,y_pred,y_true):
@@ -87,6 +96,10 @@ class Result(object):
         y_pred,y_true=raw[0],raw[1]
         return cls( y_pred=y_pred,
                     y_true=y_true)
+    
+    def save(self,out_path):
+        y_pair=np.array([self.y_pred,self.y_true])
+        np.savez(out_path,y_pair)
 
 class ResultGroup(object):
     def __init__(self,indiv_result):
@@ -96,3 +109,8 @@ class ResultGroup(object):
         acc=[ result_i.get_acc() 
                 for result_i in self.indiv_result]
         return np.mean(acc)
+
+    def save(self,out_path):
+        utils.make_dir(out_path)
+        for i,result_i in enumerate(self.indiv_result):
+            result_i.save(f"{out_path}/{i}")

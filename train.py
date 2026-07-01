@@ -5,27 +5,31 @@ def basic_exp(in_path):
     print(clf_types)
     for path_i in utils.top_files(in_path):
         data_i=dataset.read_csv(path_i)
-        splits_i=base.SplitGroup.get_split( data_i,
-                                          n_repeats=1,
-                                          n_splits=10)
-#        split_i=dataset.Split.random(data_i,p=0.9)
+        splits_i=base.SplitGroup.make( data_i,
+                                       n_repeats=1,
+                                       n_splits=10)
         for name_j,clf_type_j in clf_types.items():
             print(name_j)
             results=splits_i(data_i,clf_type_j)
             print(results.get_acc())
-#            clf_j=clf_type_j()
-#            split_i.fit_clf(data_i,clf_j)
-#            result_j=split_i.pred(data_i,clf_j)
 
-#            print(result_j.get_acc())
+def make_models(in_path,out_path):
+    clf_types=[clf.RF,clf.GRAD,clf.LR,clf.SVM]
+    utils.make_dir(out_path)
+    for id_i,path_i in utils.iter_files(in_path):
+        print(path_i)
+        data_i=dataset.read_csv(path_i)
+        splits_i=base.SplitGroup.make( data_i,
+                                       n_repeats=1,
+                                       n_splits=10)
+        out_i=f"{out_path}/{id_i}"
+        utils.make_dir(out_i)
+        splits_i.save(f"{out_i}/splits")
+        for type_j in clf_types:
+            out_ij=f"{out_i}/{type_j.NAME}"
+            results=splits_i(data_i,type_j)
+            results.save(out_ij)
+            print(results.get_acc())
 
 if __name__ == '__main__':
-    basic_exp("uci")
-#    data=dataset.read_csv("spatial/wine-quality-red")
-#    split=base.random_split(len(data)wine,p=0.9)
-#    nn=deep.make_mlp(data)
-#    result,_=split.eval(data,nn)
-#    print(f"Unbalanced:{result.get_acc():.4f}")
-#    nn=deep.make_balanced_mlp(data)
-#    result,_=split.eval(data,nn)
-#    print(f"Balanced:{result.get_acc():.4f}")
+    make_models("uci","output")
