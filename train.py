@@ -27,9 +27,18 @@ def make_models(in_path,out_path):
         splits_i.save(f"{out_i}/splits")
         for type_j in clf_types:
             out_ij=f"{out_i}/{type_j.NAME}"
+            utils.make_dir(out_ij)
             results=splits_i(data_i,type_j)
-            results.save(out_ij)
+            results.save(f"{out_ij}/results")
             print(results.get_acc())
 
+def show_pred(in_path):
+    reader=base.ResultGroup.read
+    for path_i in utils.top_files(in_path):
+        for id_j,path_j in utils.iter_files(path_i):
+            if(id_j!="splits"):
+                result=reader(f"{path_j}/results")
+                print(result.get_acc())
+
 if __name__ == '__main__':
-    make_models("uci","output")
+    show_pred("output")

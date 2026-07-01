@@ -13,6 +13,10 @@ def top_files(path):
     paths=sorted(paths,key=natural_keys)
     return paths
 
+def iter_files(path):
+    for file_i in os.listdir(path):
+        yield  file_i,f'{path}/{file_i}'
+
 def natural_keys(text):
     return [ atoi(c) for c in re.split('(\\d+)', text) ]
 

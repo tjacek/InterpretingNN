@@ -114,3 +114,9 @@ class ResultGroup(object):
         utils.make_dir(out_path)
         for i,result_i in enumerate(self.indiv_result):
             result_i.save(f"{out_path}/{i}")
+    
+    @classmethod
+    def read(cls,in_path:str):
+        results=[ Result.read(path_i)
+                  for path_i in utils.top_files(in_path)]
+        return cls(results)
