@@ -26,7 +26,7 @@ def make_pred(in_path,out_path):
         for type_j in clf_types:
             out_ij=f"{out_i}/{type_j.NAME}"
             utils.make_dir(out_ij)
-            results=splits_i(data_i,type_j)
+            results,_=splits_i(data_i,type_j)
             results.save(f"{out_ij}/results")
             print(results.get_acc())
 
@@ -69,9 +69,12 @@ def make_models(in_path,out_path):
         splits_i=get_splits(out_i,data_i)
         clf_path_i=f"{out_i}/{clf_type.NAME}"
         utils.make_dir(clf_path_i)
-        results=splits_i(data_i,clf_type)
+        results,clfs=splits_i(data_i,clf_type)
         results.save(f"{clf_path_i}/results")
+        utils.make_dir(f"{clf_path_i}/models")
+        for j,clf_j in enumerate(clfs):
+            clf_j.save(f"{clf_path_i}/models/{j}")
 
 if __name__ == '__main__':
-#    make_models("uci","output")
+    make_models("uci","output")
     show_pred("output")

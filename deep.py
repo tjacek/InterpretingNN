@@ -46,6 +46,9 @@ class MLP(clf.Clf):
         return self.model.predict(X,
                              verbose=False)
 
+    def save(self,out_path):
+        self.model.save(f"{out_path}.keras")
+
 def basic_callback():
     return tf.keras.callbacks.EarlyStopping(monitor='accuracy', 
                                             patience=15)

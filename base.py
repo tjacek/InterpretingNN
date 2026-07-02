@@ -12,13 +12,14 @@ class SplitGroup(object):
         return len(self.splits)
 
     def __call__(self,data,clf_type):
-        all_results=[]
+        all_results,all_clfs=[],[]
         for split_i in tqdm(self.splits):
             clf_i=clf_type()
             split_i.fit_clf(data,clf_i)
             result_i=split_i.pred(data,clf_i)
             all_results.append(result_i)
-        return ResultGroup(all_results)
+            all_clfs.append(clf_i)
+        return ResultGroup(all_results),all_clfs
 
     @classmethod
     def make( cls,
@@ -62,8 +63,6 @@ class Split(object):
     @classmethod
     def read(cls,in_path):
         raw=list(np.load(in_path).values())
-#        raise Exception(values)
-#        raw=list(np.load(in_path).values())[0]
         train_index,test_index=raw[0],raw[1]
         return cls( train_index=train_index,
                     test_index=test_index)
