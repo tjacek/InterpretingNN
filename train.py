@@ -1,4 +1,4 @@
-import pandas as pd
+import os.path
 import base,clf,dataset,deep,utils
 
 def basic_exp(in_path):
@@ -20,9 +20,7 @@ def make_models(in_path,out_path):
     for id_i,path_i in utils.iter_files(in_path):
         print(path_i)
         data_i=dataset.read_csv(path_i)
-        splits_i=base.SplitGroup.make( data_i,
-                                       n_repeats=1,
-                                       n_splits=10)
+        splits_i=get_splits(path_i,data_i)
         out_i=f"{out_path}/{id_i}"
         utils.make_dir(out_i)
         splits_i.save(f"{out_i}/splits")
@@ -50,5 +48,14 @@ def show_pred(in_path):
         df["norm_acc"]=df["acc"].apply(lambda acc: (acc-min_acc)/delta_acc)
         print(df)
 
+def get_splits(in_path,data_i):
+    split_cls=base.SplitGroup
+    split_path=f"{in_path}/splits"
+    if os.path.exists(split_path):
+        return split_cls.read(split_path)
+    else:
+        return split_cls.make( data_i,
+                               n_repeats=1,
+                               n_splits=10)
 if __name__ == '__main__':
     show_pred("output")
