@@ -3,33 +3,37 @@ import tensorflow as tf
 import keras
 from keras.layers import Concatenate,Dense,BatchNormalization
 from keras import Input, Model
-import clf
+import clf,dataset
 
 
-def make_mlp(data):
-    params=data.params_dict()
-    return MLP(params=params,
-               class_weight=None)
+#def make_mlp(data):
+#    params=data.params_dict()
+#    return MLP(params=params,
+#               class_weight=None)
 
-def make_balanced_mlp(data):
-    params=data.params_dict()
-    return MLP(params=params,
-               class_weight=data.weight_dict())
+#def make_balanced_mlp(data):
+#    params=data.params_dict()
+#    return MLP(params=params,
+#               class_weight=data.weight_dict())
 
 class MLP(clf.Clf):
     NAME="MLP"
-    def __init__( self,
-                  params,
-                  class_weight=None):
-        self.params=params
-        self.class_weight=class_weight
-        self.model=model_builder(params,class_weight)
+    def __init__( self):
+        self.model=None
+        self.params=None
+#                  params,
+#                  class_weight=None):
+#        self.params=params
+#        self.class_weight=class_weight
+#        self.model=model_builder(params,class_weight)
 
     def fit(self,X,y):
+        self.params=dataset.Dataset(X,y).params_dict()
+        self.model=model_builder(self.params,None)
         y=tf.one_hot(y,depth=self.params['n_cats'])
         return self.model.fit(x=X,
                               y=y,
-                              class_weight=self.class_weight,
+                              class_weight=None,#self.class_weight,
                               epochs=1000,
                               callbacks=basic_callback(),
                               verbose=False)

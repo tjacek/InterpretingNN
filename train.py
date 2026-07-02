@@ -14,7 +14,7 @@ def basic_exp(in_path):
             results=splits_i(data_i,clf_type_j)
             print(results.get_acc())
 
-def make_models(in_path,out_path):
+def make_pred(in_path,out_path):
     clf_types=[clf.RF,clf.GRAD,clf.LR,clf.SVM]
     utils.make_dir(out_path)
     for id_i,path_i in utils.iter_files(in_path):
@@ -23,7 +23,6 @@ def make_models(in_path,out_path):
         splits_i=get_splits(path_i,data_i)
         out_i=f"{out_path}/{id_i}"
         utils.make_dir(out_i)
-        splits_i.save(f"{out_i}/splits")
         for type_j in clf_types:
             out_ij=f"{out_i}/{type_j.NAME}"
             utils.make_dir(out_ij)
@@ -51,11 +50,28 @@ def show_pred(in_path):
 def get_splits(in_path,data_i):
     split_cls=base.SplitGroup
     split_path=f"{in_path}/splits"
+    print(split_path)
     if os.path.exists(split_path):
         return split_cls.read(split_path)
     else:
-        return split_cls.make( data_i,
+        splits= split_cls.make( data_i,
                                n_repeats=1,
                                n_splits=10)
+        splits.save(split_path)
+    return splits
+
+def make_models(in_path,out_path):
+    clf_type=deep.MLP
+    for id_i,path_i in utils.iter_files(in_path):
+        out_i=f"{out_path}/{id_i}"
+        print(id_i)
+        data_i=dataset.read_csv(path_i)
+        splits_i=get_splits(out_i,data_i)
+        clf_path_i=f"{out_i}/{clf_type.NAME}"
+        utils.make_dir(clf_path_i)
+        results=splits_i(data_i,clf_type)
+        results.save(f"{clf_path_i}/results")
+
 if __name__ == '__main__':
+#    make_models("uci","output")
     show_pred("output")

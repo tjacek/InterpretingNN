@@ -5,10 +5,9 @@ from sklearn.model_selection import RepeatedStratifiedKFold
 import utils
 
 class SplitGroup(object):
-    def __init__(self,splits,n_repeats=1):
+    def __init__(self,splits):
         self.splits=splits
-        self.n_repeats=n_repeats
-    
+
     def __len__(self):
         return len(self.splits)
 
@@ -32,12 +31,18 @@ class SplitGroup(object):
         splits=[]
         for train_index,test_index in rskf.split(data.X,data.y):
             splits.append(Split(train_index,test_index))
-        return cls(splits,n_repeats)
+        return cls(splits)
     
     def save(self,out_path):
         utils.make_dir(out_path)
         for i,split_i in enumerate(self.splits):
             split_i.save(f"{out_path}/{i}")
+    
+    @classmethod
+    def read(cls,in_path):
+        splits=[ Split.read(path_i)
+                  for path_i in utils.top_files(in_path)]
+        return cls(splits)
 
 class Split(object):
     def __init__(self,train_index,test_index):
@@ -53,6 +58,15 @@ class Split(object):
 
     def save(self,out_path):
         return np.savez(out_path,self.train_index,self.test_index)
+
+    @classmethod
+    def read(cls,in_path):
+        raw=list(np.load(in_path).values())
+#        raise Exception(values)
+#        raw=list(np.load(in_path).values())[0]
+        train_index,test_index=raw[0],raw[1]
+        return cls( train_index=train_index,
+                    test_index=test_index)
 
     def __str__(self):
         train_size=self.train_index.shape[0]
@@ -72,9 +86,6 @@ class Split(object):
         train,test=np.array(train),np.array(test)
         return cls( train_index=train,
                     test_index=test)
-    
-    def save(self,out_path):
-        return np.savez(out_path,self.train_index,self.test_index)
 
 class Result(object):
     def __init__(self,y_pred,y_true):
@@ -97,10 +108,6 @@ class Result(object):
         return cls( y_pred=y_pred,
                     y_true=y_true)
     
-    def save(self,out_path):
-        y_pair=np.array([self.y_pred,self.y_true])
-        np.savez(out_path,y_pair)
-
 class ResultGroup(object):
     def __init__(self,indiv_result):
         self.indiv_result=indiv_result
