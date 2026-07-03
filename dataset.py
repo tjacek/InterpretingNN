@@ -115,6 +115,7 @@ def make_desc(in_path):
                iterable=paths,
                cols=cols)
     print(df)
+    return df
 
 if __name__ == '__main__':
     make_desc("spatial")

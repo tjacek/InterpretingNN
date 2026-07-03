@@ -19,10 +19,10 @@ def make_pred(in_path,out_path):
     utils.make_dir(out_path)
     for id_i,path_i in utils.iter_files(in_path):
         print(path_i)
-        data_i=dataset.read_csv(path_i)
-        splits_i=get_splits(path_i,data_i)
         out_i=f"{out_path}/{id_i}"
         utils.make_dir(out_i)
+        data_i=dataset.read_csv(path_i)
+        splits_i=get_splits(out_i,data_i)
         for type_j in clf_types:
             out_ij=f"{out_i}/{type_j.NAME}"
             utils.make_dir(out_ij)
@@ -30,8 +30,9 @@ def make_pred(in_path,out_path):
             results.save(f"{out_ij}/results")
             print(results.get_acc())
 
-def show_pred(in_path):
+def show_pred(in_path,verbose=True):
     reader=base.ResultGroup.read
+    df_dict={}
     for id_i,path_i in utils.iter_files(in_path):
         paths=utils.filtered_files(path_i,"splits")
         def helper(path_i):
@@ -45,7 +46,10 @@ def show_pred(in_path):
         min_acc=min(acc)
         delta_acc= max(acc)-min_acc
         df["norm_acc"]=df["acc"].apply(lambda acc: (acc-min_acc)/delta_acc)
-        print(df)
+        if(verbose):
+            print(df)
+        df_dict[id_i]=df
+    return df_dict
 
 def get_splits(in_path,data_i):
     split_cls=base.SplitGroup
@@ -74,7 +78,8 @@ def make_models(in_path,out_path):
         utils.make_dir(f"{clf_path_i}/models")
         for j,clf_j in enumerate(clfs):
             clf_j.save(f"{clf_path_i}/models/{j}")
+        print(results.get_acc())
 
 if __name__ == '__main__':
-    make_models("uci","output")
+#    make_models("spatial","output")
     show_pred("output")
