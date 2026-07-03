@@ -29,9 +29,18 @@ def reg_exp(data_path,result_path):
     for name_i,coef_i in zip(cols,reg.coef_):
         print(f"{name_i}:{coef_i:.4f}")
     y_pred=reg.predict(X)
-    for i,pred_i in enumerate(y_pred):
+    def helper(arg):
+        i,pred_i=arg
         row_i=df.iloc[i]
-        data_i,y_true=row_i["data"],row_i["target"]
-        print(f"{data_i},{y_true:.4f},{pred_i:.4f},{pred_i-y_true:.4f}")
+        data_i,y_i=row_i["data"],row_i["target"]
+        return [data_i,y_i,pred_i, y_i-pred_i]
+    df_reg=dataset.make_df(helper,
+                           enumerate(y_pred),
+                           ["data","true","pred","res"] )
+    print(df_reg)
+#    for i,pred_i in enumerate(y_pred):
+#        row_i=df.iloc[i]
+#        data_i,y_true=row_i["data"],row_i["target"]
+#        print(f"{data_i},{y_true:.4f},{pred_i:.4f},{pred_i-y_true:.4f}")
 
 reg_exp("spatial","output")
