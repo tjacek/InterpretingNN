@@ -81,5 +81,6 @@ def make_models(in_path,out_path):
         print(results.get_acc())
 
 if __name__ == '__main__':
-#    make_models("spatial","output")
-    show_pred("output")
+    make_pred("test","output_test")
+    make_models("test","output_test")
+    show_pred("output_test")

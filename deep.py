@@ -6,36 +6,27 @@ from keras import Input, Model
 import clf,dataset
 
 
-#def make_mlp(data):
-#    params=data.params_dict()
-#    return MLP(params=params,
-#               class_weight=None)
-
-#def make_balanced_mlp(data):
-#    params=data.params_dict()
-#    return MLP(params=params,
-#               class_weight=data.weight_dict())
-
 class MLP(clf.Clf):
     NAME="MLP"
-    def __init__( self):
-        self.model=None
-        self.params=None
-#                  params,
-#                  class_weight=None):
-#        self.params=params
-#        self.class_weight=class_weight
-#        self.model=model_builder(params,class_weight)
+    def __init__( self,
+                  hyper_params=None,
+                  model=None):
+        if(hyper_params is None):
+            hyper_params={'layers':1, 'units_0':2,
+                          'units_1':1,'batch':False}
+        self.hyper_params=hyper_params
+        self.model=model
+        self.data_params=None
 
     def fit(self,X,y):
-        self.params=dataset.Dataset(X,y).params_dict()
-        self.model=model_builder(self.params,None)
-        y=tf.one_hot(y,depth=self.params['n_cats'])
+        self.data_params=dataset.DatasetParams.from_arr(X,y)
+        self.model= self._build()
+        y=tf.one_hot(y,depth=self.data_params.cats)
         return self.model.fit(x=X,
                               y=y,
                               class_weight=None,#self.class_weight,
                               epochs=1000,
-                              callbacks=basic_callback(),
+                              callbacks=self.callback(),
                               verbose=False)
     def predict(self,X):
         y=self.model.predict(X,
@@ -48,53 +39,29 @@ class MLP(clf.Clf):
 
     def save(self,out_path):
         self.model.save(f"{out_path}.keras")
-
-def basic_callback():
-    return tf.keras.callbacks.EarlyStopping(monitor='accuracy', 
+    
+    @classmethod
+    def callback(cls):
+        return tf.keras.callbacks.EarlyStopping(monitor='accuracy', 
                                             patience=15)
 
-
-def model_builder(params,
-                   hyper_params=None,
-                   class_dict=None):
-    input_layer = Input(shape=(params['dims']))
-    if(hyper_params is None):
-        hyper_params=default_hyperparams()
-    nn=nn_builder(params=params,
-                    hyper_params=hyper_params,
-                    input_layer=input_layer,
-                    i=0,
-                    n_cats=params['n_cats'])
-    
-#    loss=WeightedLoss()(specific=None,
-#                       class_dict=class_dict)
-    model= Model(inputs=input_layer, 
-                 outputs=nn)
-    model.compile(loss='categorical_crossentropy',
+    def _build( self):
+        input_layer = Input(shape=(self.data_params.feats,))
+        x_i=input_layer
+        for i in range(self.hyper_params['layers']):
+            hidden_i=int( self.data_params.feats* 
+                          self.hyper_params[f'units_{i}'])
+            x_i=Dense(hidden_i,activation='relu',
+                    name=f"layer_{i}")(x_i)
+        if(self.hyper_params['batch']):
+            x_j=BatchNormalization(name=f'batch')(x_i)
+        output_layer=Dense(self.data_params.cats, 
+                           activation='softmax',
+                           name=f'out')(x_i)
+        model= Model(inputs=input_layer, 
+                     outputs=output_layer)
+        model.compile(loss='categorical_crossentropy',
                   optimizer='adam',
                   metrics=['accuracy'],
                   jit_compile=False)
-    return model
-
-def nn_builder(params,
-               hyper_params,
-               input_layer=None,
-               i=0,
-               n_cats=None):
-    if(input_layer is None):
-        input_layer = Input(shape=(params['dims']))
-    if(n_cats is None):
-        n_cats=params['n_cats']
-    x_i=input_layer
-    for j in range(hyper_params['layers']):
-        hidden_j=int(params['dims'][0]* hyper_params[f'units_{j}'])
-        x_i=Dense(hidden_j,activation='relu',
-                    name=f"layer_{i}_{j}")(x_i)
-    if(hyper_params['batch']):
-        x_i=BatchNormalization(name=f'batch_{i}')(x_i)
-    x_i=Dense(n_cats, activation='softmax',name=f'out_{i}')(x_i)
-    return x_i
-
-def default_hyperparams():
-    return {'layers':1, 'units_0':2,
-            'units_1':1,'batch':False}
+        return model
