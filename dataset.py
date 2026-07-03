@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn import preprocessing
 from sklearn.decomposition import PCA
-import base
+import base,utils
 
 class Dataset(object):
     def __init__(self,X,y=None):
@@ -96,6 +96,25 @@ def make_df(helper,
                                 columns=cols)
     return df 
 
+
+def make_desc(in_path):
+    paths=list(utils.iter_files(in_path))
+    def helper(args):
+        id_i,path_i=args
+        data_i=read_csv(path_i)
+        line_i=[ id_i,
+                 data_i.n_cats(),
+                 data_i.dim(),
+                 len(data_i),
+                 round(data_i.IR(),2)]
+        line_i+=data_i.pca_feats()
+        return line_i
+    cols=["data","classes","feats","samples",
+          "IR","pca_max","pca_95"]
+    df=make_df(helper,
+               iterable=paths,
+               cols=cols)
+    print(df)
+
 if __name__ == '__main__':
-    data=read_csv("uci/satimage")
-    print(data.pca_feats())
+    make_desc("spatial")
