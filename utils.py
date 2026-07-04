@@ -6,16 +6,16 @@ def make_dir(path):
         os.mkdir(path)
 
 def top_files(path):
-    if(type(path)==str):
-        paths=[ f'{path}/{file_i}' for file_i in os.listdir(path)]
-    else:
-        paths=path
+    paths=[ path_i for id_i,path_i in iter_files(path)]
     paths=sorted(paths,key=natural_keys)
     return paths
 
 def iter_files(path):
-    for file_i in os.listdir(path):
-        yield  file_i,f'{path}/{file_i}'
+    if(type(path)==str):
+         path=[path]
+    for dir_i in path:
+        for file_i in os.listdir(dir_i):
+            yield  file_i,f'{dir_i}/{file_i}'
 
 def filtered_files(path,taboo):
     if(type(taboo)==str):

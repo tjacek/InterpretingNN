@@ -16,6 +16,7 @@ def basic_exp(in_path):
 
 def make_pred(in_path,out_path):
     clf_types=[clf.RF,clf.GRAD,clf.LR,clf.SVM]
+#    clf_types=[deep.TabPFN]
     utils.make_dir(out_path)
     for id_i,path_i in utils.iter_files(in_path):
         print(path_i)
@@ -46,6 +47,7 @@ def show_pred(in_path,verbose=True):
         min_acc=min(acc)
         delta_acc= max(acc)-min_acc
         df["norm_acc"]=df["acc"].apply(lambda acc: (acc-min_acc)/delta_acc)
+        df.sort_values(by="norm_acc",inplace=True)
         if(verbose):
             print(df)
         df_dict[id_i]=df
@@ -81,6 +83,6 @@ def make_models(in_path,out_path):
         print(results.get_acc())
 
 if __name__ == '__main__':
-    make_pred("test","output_test")
-    make_models("test","output_test")
-    show_pred("output_test")
+#    make_pred("AutoML/data","AutoML/output")
+#    make_models("AutoML/data","AutoML/output")
+    show_pred(["AutoML/output","uci/output"])
