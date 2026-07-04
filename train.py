@@ -15,8 +15,8 @@ def basic_exp(in_path):
             print(results.get_acc())
 
 def make_pred(in_path,out_path):
-    clf_types=[clf.RF,clf.GRAD,clf.LR,clf.SVM]
-#    clf_types=[deep.TabPFN]
+#    clf_types=[clf.RF,clf.GRAD,clf.LR,clf.SVM]
+    clf_types=[deep.TabPFN]
     utils.make_dir(out_path)
     for id_i,path_i in utils.iter_files(in_path):
         print(path_i)
@@ -26,6 +26,8 @@ def make_pred(in_path,out_path):
         splits_i=get_splits(out_i,data_i)
         for type_j in clf_types:
             out_ij=f"{out_i}/{type_j.NAME}"
+            if(os.path.exists(out_ij)):
+                continue
             utils.make_dir(out_ij)
             results,_=splits_i(data_i,type_j)
             results.save(f"{out_ij}/results")
@@ -83,6 +85,6 @@ def make_models(in_path,out_path):
         print(results.get_acc())
 
 if __name__ == '__main__':
-#    make_pred("AutoML/data","AutoML/output")
+    make_pred("AutoML/data","AutoML/output")
 #    make_models("AutoML/data","AutoML/output")
     show_pred(["AutoML/output","uci/output"])
