@@ -3,7 +3,7 @@ import tensorflow as tf
 import keras
 from keras.layers import Concatenate,Dense,BatchNormalization
 from keras import Input, Model
-from tabpfn import TabPFNClassifier
+#from tabpfn import TabPFNClassifier
 import clf,dataset
 
 
@@ -66,6 +66,15 @@ class MLP(clf.Clf):
                   metrics=['accuracy'],
                   jit_compile=False)
         return model
+
+    @classmethod
+    def read(cls,in_path):
+        model=keras.saving.load_model(in_path)
+        return cls(model=model)
+
+    def get_weights(self):
+        layer=self.model.get_layer("layer_0_0")
+        return layer.get_weights()[0]
 
 class TabPFN(clf.Clf):
     NAME="TabPFN"
