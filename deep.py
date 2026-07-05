@@ -73,7 +73,8 @@ class MLP(clf.Clf):
         return cls(model=model)
 
     def get_weights(self):
-        layer=self.model.get_layer("layer_0_0")
+#        layer=self.model.get_layer("layer_0_0")
+        layer=self.model.layers[1]
         return layer.get_weights()[0]
 
 class TabPFN(clf.Clf):
