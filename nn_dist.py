@@ -3,14 +3,17 @@ from sklearn.neighbors import KernelDensity
 import matplotlib.pyplot as plt
 import deep, utils
 
-def neural_dist(in_path,out_path=None):
+def neural_dist( in_path,
+	             norm_fun,
+	             out_path=None):
 	if(out_path):
 		utils.make_dir(out_path)
+
 	paths=mlp_paths(in_path)
 	for id_i,path_i in paths.items():
 		mlp_i=deep.MLP.read(f"{path_i}/models/0.keras")
 		weights=mlp_i.get_weights()
-		x,y_dict=compute_density(weights,[L1(),L2(),LInf()])
+		x,y_dict=compute_density(weights,norm_fun)
 		out_i= f"{out_path}/{id_i}" if(out_path) else None
 		plot(x,y_dict,id_i,out_i)
 
@@ -55,28 +58,52 @@ def mlp_paths(in_path):
 	             if(id_i=="MLP")][0]
 	          for id_i,path_i in utils.iter_files(in_path)}
 
-class L1(object):
+class WeightNorm(object):
+	def __init__(self,dim=0):
+		self.dim=dim
+
+	def __str__(self):
+	    return self.NAME 
+
+class L1(WeightNorm):
+    NAME="L1"
     def __call__(self,weights):
         weights=np.abs(weights)
-        return np.sum(weights,axis=0)
+        return np.sum(weights,axis=self.dim)
 
-    def __str__(self):
-    	return "L1"
-
-class L2(object):
+class L2(WeightNorm):
+    NAME="L2"
     def __call__(self,weights):
         weights=weights**2
-        norm=np.sum(weights,axis=0)
+        norm=np.sum(weights,axis=self.dim)
         return np.sqrt(norm)
 
-    def __str__(self):
-    	return "L2"
-
-class LInf(object):
+class LInf(WeightNorm):
+	NAME="L_inf"
 	def __call__(self,weights):
-		return np.amax(weights,axis=0)
-    
-	def __str__(self):
-		return "L_inf"
+		return np.amax(weights,axis=self.dim)
 
-neural_dist(["AutoML/output","uci/output"],"norms")
+class NormProp(object):
+	def __init__(self, nom_norm,denom_norm,dim):
+		self.nom_norm=nom_norm(dim)
+		self.denom_norm=denom_norm(dim)
+		self.name=f"{self.nom_norm}/{self.denom_norm}"
+
+	def  __call__(self,weights):
+		return self.nom_norm(weights)/self.denom_norm(weights)
+
+	def __str__(self):
+		return self.name
+
+def norm_exp(in_path,out_path=None,dim=0):
+	norm_fun=[L1,L2,LInf]
+	norm_fun=[fun_i(dim) for fun_i in norm_fun]
+	neural_dist(in_path,norm_fun,out_path)
+
+def prop_exp(in_path,out_path=None,dim=0):
+	norm_fun=[NormProp(LInf,L1,dim),
+	          NormProp(L2,L1,dim),
+	          NormProp(LInf,L2,dim)]
+	neural_dist(in_path,norm_fun,out_path)
+
+prop_exp(["AutoML/output","uci/output"],"norms/prop_rows",1)
