@@ -8,7 +8,7 @@ def neural_dist(in_path):
 	for id_i,path_i in paths.items():
 		mlp_i=deep.MLP.read(f"{path_i}/models/0.keras")
 		weights=mlp_i.get_weights()
-		x,y_dict=compute_density(weights,[L1(),L2()])
+		x,y_dict=compute_density(weights,[L1(),L2(),LInf()])
 		plot(x,y_dict,id_i)
 
 def plot(x,y_dict,title):
@@ -62,6 +62,13 @@ class L2(object):
 
     def __str__(self):
     	return "L2"
+
+class LInf(object):
+	def __call__(self,weights):
+		return np.amax(weights,axis=0)
+    
+	def __str__(self):
+		return "L_inf"
 
 neural_dist("uci/output")
 
