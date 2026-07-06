@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.neighbors import KernelDensity
 import matplotlib.pyplot as plt
+from enum import IntEnum
 import deep, utils
 
 def neural_dist( in_path,
@@ -11,6 +12,7 @@ def neural_dist( in_path,
 
 	paths=mlp_paths(in_path)
 	for id_i,path_i in paths.items():
+		print(id_i)
 		mlp_i=deep.MLP.read(f"{path_i}/models/0.keras")
 		weights=mlp_i.get_weights()
 		x,y_dict=compute_density(weights,norm_fun)
@@ -43,6 +45,7 @@ def compute_density(weights,norm_fun):
     y_dict,max_value={},0
     for fun_i in norm_fun:
         norms_i=fun_i(weights).reshape(-1, 1)
+        raise Exception(norms_i.shape)
         max_value=max(np.amax(norms_i),max_value)
         kde = KernelDensity(kernel='gaussian', bandwidth=0.2)
         kde.fit(norms_i)
@@ -58,7 +61,12 @@ def mlp_paths(in_path):
 	             if(id_i=="MLP")][0]
 	          for id_i,path_i in utils.iter_files(in_path)}
 
+class DIMS(IntEnum):
+    COLS= 0 # From last layer
+    ROWS = 1 # On next layer
+
 class WeightNorm(object):
+
 	def __init__(self,dim=0):
 		self.dim=dim
 
@@ -95,15 +103,20 @@ class NormProp(object):
 	def __str__(self):
 		return self.name
 
-def norm_exp(in_path,out_path=None,dim=0):
+def norm_exp(in_path,out_path=None,dim="ROWS"):
+	out_path=f"{out_path}_{dim.lower()}"	
+	dim=DIMS[dim]
 	norm_fun=[L1,L2,LInf]
 	norm_fun=[fun_i(dim) for fun_i in norm_fun]
 	neural_dist(in_path,norm_fun,out_path)
 
-def prop_exp(in_path,out_path=None,dim=0):
+def prop_exp(in_path,out_path=None,dim="ROWS"):
+	out_path=f"{out_path}_{dim.lower()}"
+	dim=DIMS[dim]
 	norm_fun=[NormProp(LInf,L1,dim),
 	          NormProp(L2,L1,dim),
 	          NormProp(LInf,L2,dim)]
 	neural_dist(in_path,norm_fun,out_path)
 
-prop_exp(["AutoML/output","uci/output"],"norms/prop_rows",1)
+prop_exp([#"AutoML/output",
+	      "uci/output"],"norms/prop","COLS")
