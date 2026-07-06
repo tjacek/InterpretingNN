@@ -1,21 +1,30 @@
 import os.path
 import base,clf,dataset,deep,utils
 
+class PredDict(object):
+    def __init__(self,df_dict):
+        self.df_dict=df_dict
+
+    def __getitem__(self,clf):
+        clf_dict={}
+        for name_i,df_i in self.df_dict.items():
+            acc = df_i.set_index("clf")["norm_acc"]
+            clf_dict[name_i]=acc[clf]
+        return clf_dict
+
 def basic_exp(in_path):
-    clf_types= clf.Clf.to_dict()
-    print(clf_types)
     for path_i in utils.top_files(in_path):
         data_i=dataset.read_csv(path_i)
         splits_i=base.SplitGroup.make( data_i,
                                        n_repeats=1,
                                        n_splits=10)
-        for name_j,clf_type_j in clf_types.items():
-            print(name_j)
+        for clf_type_j in clf.Clf.CLF_TYPES
+            print(clf_type_j)
             results=splits_i(data_i,clf_type_j)
             print(results.get_acc())
 
 def make_pred(in_path,out_path):
-#    clf_types=[clf.RF,clf.GRAD,clf.LR,clf.SVM]
+    clf_types=[clf.RF,clf.GRAD,clf.LR,clf.SVM]
     clf_types=[deep.TabPFN]
     utils.make_dir(out_path)
     for id_i,path_i in utils.iter_files(in_path):
@@ -53,7 +62,7 @@ def show_pred(in_path,verbose=True):
         if(verbose):
             print(df)
         df_dict[id_i]=df
-    return df_dict
+    return PredDict(df_dict)
 
 def get_splits(in_path,data_i):
     split_cls=base.SplitGroup
