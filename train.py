@@ -12,13 +12,20 @@ class PredDict(object):
             clf_dict[name_i]=acc[clf]
         return clf_dict
 
+    def issubset(self, names):
+        return set(names).issubset(self.df_dict.keys())
+#        for key_i in keys:
+#            if(not key_i in self.df_dict)
+
+
+
 def basic_exp(in_path):
     for path_i in utils.top_files(in_path):
         data_i=dataset.read_csv(path_i)
         splits_i=base.SplitGroup.make( data_i,
                                        n_repeats=1,
                                        n_splits=10)
-        for clf_type_j in clf.Clf.CLF_TYPES
+        for clf_type_j in clf.TYPES:
             print(clf_type_j)
             results=splits_i(data_i,clf_type_j)
             print(results.get_acc())
