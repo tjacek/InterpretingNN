@@ -1,7 +1,28 @@
 from sklearn.linear_model import LinearRegression
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
+import numpy as np
+import matplotlib.pyplot as plt
+from dataclasses import dataclass,field#asdict
+
 import dataset,train
+
+@dataclass
+class GPROutput:
+    names: list = field(default_factory=list)
+    y_true: list = field(default_factory=list)
+    y_pred: list = field(default_factory=list)
+    error: list = field(default_factory=list)
+
+    def add( self,
+             name_i,
+             true_i,
+             pred_i,
+             error_i):
+        self.names.append(name_i)
+        self.y_true.append(true_i)
+        self.y_pred.append(pred_i)
+        self.error.append(error_i)
 
 def get_input_data(data_path,
                    result_path,
@@ -41,24 +62,56 @@ def leve_one_out(df):
         yield train,test, data_i
 
 def gpr(df):
-    names,y_true,y_pred,error=[],[],[],[]
+    output=GPROutput()
     for train_i,test_i,data_i  in leve_one_out(df):
         kernel =  RBF(length_scale=1.0, 
                       length_scale_bounds=(1e-2, 1e2))
         gauss_process = GaussianProcessRegressor(kernel=kernel, 
                                                     n_restarts_optimizer=9)
         gauss_process.fit(train_i.X, train_i.y)
-        names.append(data_i)
     
         mean_i, std_i = gauss_process.predict(test_i.X, 
                                               return_std=True)
-        y_pred.append(mean_i[0])
-        error.append(std_i[0])
-    return names,y_true,y_pred,error
+        output.add(data_i,test_i.y,mean_i[0],std_i[0])
+
+    return output
 
 def gauss_reg(data_path,result_path):
     df=get_input_data(data_path,result_path)
-    names,y_true,y_pred,error=gpr(df)
+    output=gpr(df)
+    error_hist(**output.__dict__)
+
+def error_hist( names,
+                y_true,
+                y_pred,
+                error):
+    x = np.arange(len(names))
+    plt.figure(figsize=(12, 6))
+
+    plt.scatter(x, y_true,
+                color="tab:blue",
+                marker="o",
+                label="True value")
+
+    plt.errorbar(
+        x,
+        y_pred,
+        yerr=error,
+        fmt="s",
+        color="tab:red",
+        ecolor="black",
+        elinewidth=1.5,
+        capsize=5,
+        label="Prediction ± std"
+    )
+    plt.xticks(x, names, rotation=90)
+    plt.xlabel("Sample")
+    plt.ylabel("Target")
+    plt.title("Gaussian Process Regression - Leave-One-Out")
+    plt.grid(alpha=0.7)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
 
 #def reg_exp(data_path,result_path):
 #    df=get_input_data(data_path,result_path)
@@ -80,7 +133,7 @@ def gauss_reg(data_path,result_path):
 #                           ["data","true","pred","res"] )
 #    print(df_reg)
 
-gauss_reg(["AutoML/data",
+gauss_reg([#"AutoML/data",
            "uci/data"],
-          ["AutoML/output",
+          [#"AutoML/output",
            "uci/output"])
