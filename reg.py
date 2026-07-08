@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from dataclasses import dataclass,field#asdict
 
-import dataset,train
+import dataset,train,utils
 
 @dataclass
 class GPROutput:
@@ -13,6 +13,9 @@ class GPROutput:
     y_true: list = field(default_factory=list)
     y_pred: list = field(default_factory=list)
     error: list = field(default_factory=list)
+
+    def __len__(self):
+        return len(self.names)
 
     def add( self,
              name_i,
@@ -23,6 +26,28 @@ class GPROutput:
         self.y_true.append(true_i)
         self.y_pred.append(pred_i)
         self.error.append(error_i)
+
+    def raw_error(self):
+        return np.array(self.y_true) - np.array(self.y_pred)
+
+    def abs_error(self):
+        abs_error=np.abs(self.raw_error())
+        return np.mean(abs_error)
+
+    def mse(self):
+        error=self.raw_error()
+        return np.sqrt(np.mean(error**2))
+
+    def slice(self,i,step=10):
+        keys=["names","y_true","y_pred","error"]
+        arr=[ self.__dict__[key_i][i*step:(i+1)*step] 
+                for key_i in keys]
+        return self.__class__(*arr)
+
+    def iter_slices(self,step=10):
+        n_iters=int(np.ceil(len(self) / step))
+        for i in range(n_iters):
+            yield self.slice(i,step)
 
 def get_input_data(data_path,
                    result_path,
@@ -76,11 +101,22 @@ def gpr(df):
 
     return output
 
-def gauss_reg(data_path,result_path):
+def gauss_reg( data_path,
+               result_path,
+               out_path=None):
     df=get_input_data(data_path,result_path)
     output=gpr(df)
-    error_hist(**output.__dict__)
-
+    print(f"Mean absolute error:{output.abs_error():.4f}")
+    print(f"Mean squared error {output.mse():.4f}")
+    if(out_path):
+        utils.make_dir(out_path)
+    for i,out_i in enumerate(output.iter_slices(10)):
+        error_hist(**out_i.__dict__)
+        if(out_path):
+            plt.savefig(f'{out_path}/{i}.png')
+        else:
+            plt.show()
+        
 def error_hist( names,
                 y_true,
                 y_pred,
@@ -111,7 +147,6 @@ def error_hist( names,
     plt.grid(alpha=0.7)
     plt.legend()
     plt.tight_layout()
-    plt.show()
 
 #def reg_exp(data_path,result_path):
 #    df=get_input_data(data_path,result_path)
@@ -133,7 +168,8 @@ def error_hist( names,
 #                           ["data","true","pred","res"] )
 #    print(df_reg)
 
-gauss_reg([#"AutoML/data",
+gauss_reg(["AutoML/data",
            "uci/data"],
-          [#"AutoML/output",
-           "uci/output"])
+          ["AutoML/output",
+           "uci/output"],
+           "gauss_reg")
