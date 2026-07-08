@@ -18,15 +18,19 @@ def compute_shapley(in_path,out_path=None):
          	                       data_i.X[split_i.train_index])
         shap_values = explainer(data_i.X[split_i.test_index])
         values=np.mean(np.abs(shap_values.values),axis=0)
+        if(out_path):
+            id_i=path_i.split("/")[-1]
+            np.savetxt(f'{out_path}/{id_i}.txt', values, fmt='%f')
 
-        sn.heatmap(values,cmap="YlGnBu",#linewidths=0.5,
+def show_heatmap(in_path):
+    for path_i in utils.top_files(in_path):
+        values = np.loadtxt(path_i)
+        sn.heatmap(values,cmap="YlGnBu",linewidths=0.5,
                    annot=True,annot_kws={"size": 5}, fmt='g')
         id_i=path_i.split("/")[-1]
         plt.title(id_i)
-        if(out_path):
-            plt.savefig(f'{out_path}/{id_i}.png')
-        else:
-            plt.show()
+        plt.show()
 
 
-compute_shapley("uci/data","shapley")	
+#compute_shapley("AutoML/data","shapley")	
+show_heatmap("shapley")
