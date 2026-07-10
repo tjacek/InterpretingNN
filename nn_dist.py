@@ -61,6 +61,11 @@ def mlp_paths(in_path):
 	             if(id_i=="MLP")][0]
 	          for id_i,path_i in utils.iter_files(in_path)}
 
+def mlp_iter(in_path):
+    for id_i,path_i in mlp_paths(in_path).items():
+        mlp_i=deep.MLP.read(f"{path_i}/models/0.keras")
+        yield id_i,mlp_i
+
 class DIMS(IntEnum):
     COLS= 0 # From last layer
     ROWS = 1 # On next layer
@@ -118,5 +123,6 @@ def prop_exp(in_path,out_path=None,dim="ROWS"):
 	          NormProp(LInf,L2,dim)]
 	neural_dist(in_path,norm_fun,out_path)
 
-prop_exp([#"AutoML/output",
+if __name__ == '__main__':
+    prop_exp([#"AutoML/output",
 	      "uci/output"],"norms/prop","COLS")
