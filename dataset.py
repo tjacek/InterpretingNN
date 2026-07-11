@@ -41,14 +41,14 @@ class Dataset(object):
         return DatasetParams(self.dim(),
                              len(self),
                              self.n_cats())
-#        return { "n_cats":self.n_cats(),
-#                 "dims":(self.dim(),),
-#                 "n_samples":len(self)}
-#                "class_weight":self.weight_dict()}
 
     def range(self):
         return [ (np.amin(x_i),np.amax(x_i))
                     for x_i in self.X.T]
+
+    def norm(self):
+        scaler=preprocessing.RobustScaler()
+        self.X= scaler.fit_transform(self.X)
 
     def class_sizes(self):
         cats=  list(set(self.y))
