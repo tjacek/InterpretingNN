@@ -72,10 +72,20 @@ class MLP(clf.Clf):
         model=keras.saving.load_model(in_path)
         return cls(model=model)
 
-    def get_weights(self):
-#        layer=self.model.get_layer("layer_0_0")
-        layer=self.model.layers[1]
+    def get_weights(self,layer_index=1):
+        layer=self.model.layers[layer_index]
         return layer.get_weights()[0]
+
+    def random_output( self,
+                       data,
+                       n_samples=1000):
+        value_range=data.range()
+        samples=[np.random.uniform(v_min,
+                           v_max,
+                           size=n_samples) 
+                    for v_min,v_max in value_range]
+        samples=np.array(samples).T
+        return self.predict(samples)
 
 class TabPFN(clf.Clf):
     NAME="TabPFN"
