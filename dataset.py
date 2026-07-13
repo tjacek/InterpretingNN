@@ -73,8 +73,15 @@ class Dataset(object):
         int_var=(cum_var>0.95).astype(int)
         thres_var= np.argmax(int_var)/cum_var.shape[0]
         return greatest,thres_var
-
-
+    
+    def divide(self,split):
+        train=self.select(split.train_index)
+        test=self.select(split.test_index)
+        return train,test
+    
+    def select(self,index):
+        return Dataset(self.X[index],
+                       self.y[index])
 @dataclass
 class DatasetParams:
     feats:int

@@ -14,9 +14,11 @@ def compute_shapley(in_path,out_path=None):
         split_i=base.Split.random(data_i,0.9)
         clf_i=RandomForestClassifier()
         split_i.fit_clf(data_i,clf_i)
+        train,test=data_i.divide(split_i)
+
         explainer = shap.Explainer(clf_i.predict_proba, 
-         	                       data_i.X[split_i.train_index])
-        shap_values = explainer(data_i.X[split_i.test_index])
+         	                      train.X)
+        shap_values = explainer(test.X,max_evals=620)
         values=np.mean(np.abs(shap_values.values),axis=0)
         if(out_path):
             id_i=path_i.split("/")[-1]
@@ -32,5 +34,5 @@ def show_heatmap(in_path):
         plt.show()
 
 
-#compute_shapley("AutoML/data","shapley")	
-show_heatmap("shapley")
+compute_shapley("AutoML/_data","shapley")	
+#show_heatmap("shapley")
