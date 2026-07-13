@@ -53,7 +53,7 @@ def get_input_data(data_path,
                    result_path,
                    x_clf="RF",
                    y_clf="TabPFN"):
-    df=dataset.make_desc(data_path)
+    df=dataset.make_desc(data_path,verbose=False)
     df_dict=train.show_pred(result_path,verbose=False)
     x_dict=df_dict[x_clf]
     y_dict=df_dict[y_clf]
@@ -61,6 +61,8 @@ def get_input_data(data_path,
         data_id=row["data"]
         return x_dict[data_id] - y_dict[data_id]
     df["target"]=df.apply(helper, axis=1)
+    df["binary"]=df["classes"].apply(lambda c: int(c<3))
+    print(df)
     return df
 
 def to_array(df):
@@ -70,7 +72,7 @@ def to_array(df):
     X=df.to_numpy()
     return X,y
 
-def leve_one_out(df):
+def leve_one_out(df,norm=True):
     for i in range(len(df)):
         train = df.drop(index=i)
 
@@ -83,8 +85,10 @@ def leve_one_out(df):
         test=dataset.Dataset(X_test,y_test)
 
         data_i = df.iloc[i]["data"]
-
-        yield train,test, data_i
+        if(norm):
+            train.norm()
+            test.norm()
+        yield train,test,data_i
 
 def gpr(df):
     output=GPROutput()
@@ -168,8 +172,7 @@ def error_hist( names,
 #                           ["data","true","pred","res"] )
 #    print(df_reg)
 
-gauss_reg(["AutoML/data",
-           "uci/data"],
+gauss_reg(["AutoML/data"],
           ["AutoML/output",
            "uci/output"],
            "gauss_reg")

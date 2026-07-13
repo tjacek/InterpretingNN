@@ -49,6 +49,7 @@ class Dataset(object):
     def norm(self):
         scaler=preprocessing.RobustScaler()
         self.X= scaler.fit_transform(self.X)
+        return self
 
     def class_sizes(self):
         cats=  list(set(self.y))
@@ -113,7 +114,7 @@ def make_df(helper,
     return df 
 
 
-def make_desc(in_path):
+def make_desc(in_path,verbose=True):
     paths=list(utils.iter_files(in_path))
     def helper(args):
         id_i,path_i=args
@@ -130,7 +131,8 @@ def make_desc(in_path):
     df=make_df(helper,
                iterable=paths,
                cols=cols)
-    print(df)
+    if(verbose):
+        print(df)
     return df
 
 if __name__ == '__main__':

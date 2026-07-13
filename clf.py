@@ -4,7 +4,6 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn import svm
 
 class Clf(object):
-    CLF_TYPES=[RF,GRAD,LR,SVM]
 
     def fit(self,X,y):
         return self.model.fit(X,y)
@@ -37,3 +36,5 @@ class SVM(Clf):
     NAME="SVM"
     def __init__(self):
         self.model=svm.SVC(kernel='rbf')
+
+TYPES=[RF,GRAD,LR,SVM]
