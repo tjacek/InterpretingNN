@@ -24,6 +24,14 @@ def plot_xy( in_path,
     plt.grid()
     plt.show()
 
+def show_plots(img_iter,out_path=None):
+    for i,out_i in enumerate(img_iter):
+#        error_hist(**out_i.__dict__)
+        if(out_path):
+            plt.savefig(f'{out_path}/{i}.png')
+        else:
+            plt.show()
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--x", type=str,default="RF")

@@ -4,14 +4,16 @@ from sklearn.gaussian_process.kernels import RBF
 import numpy as np
 import matplotlib.pyplot as plt
 from dataclasses import dataclass,field#asdict
-
-import dataset,train,utils
+import dataset,train,plot,utils
 
 @dataclass
 class RegOutput:
     names: list = field(default_factory=list)
     y_true: list = field(default_factory=list)
     y_pred: list = field(default_factory=list)
+    
+    def __len__(self):
+        return len(self.names)
 
     def add( self,
              name_i,
@@ -33,8 +35,9 @@ class RegOutput:
         return np.sqrt(np.mean(error**2))
     
     def slice(self,i,step=10):
+
         arr={ key_i:self.__dict__[key_i][i*step:(i+1)*step] 
-                for key_i in keys}
+                for key_i in self.__dict__}
         return self.__class__(**arr)
 
     def iter_slices(self,step=10):
@@ -70,7 +73,7 @@ def leve_one_out(df,norm=True):
 
 @dataclass
 class GaussOutput(RegOutput):
-    std: float  = field(default_factory=list)
+    error: float  = field(default_factory=list)
     
     def fit(self,train_i,test_i):
         kernel =  RBF(length_scale=1.0, 
@@ -80,8 +83,14 @@ class GaussOutput(RegOutput):
         gauss_process.fit(train_i.X, train_i.y)
         mean_i, std_i = gauss_process.predict(test_i.X, 
                                           return_std=True)
-        std.append(std_i)
+        self.error.append(std_i[0])
         return mean_i[0]
+    
+    def show(self,df):
+        def img_iter():
+            for out_i in self.iter_slices(10):
+                yield error_hist(**out_i.__dict__)
+        return img_iter()
 
 @dataclass
 class LinearOutput(RegOutput):
@@ -138,15 +147,9 @@ def regression( data_path,
     output=reg_alg.make(df)
     print(f"Mean absolute error:{output.abs_error():.4f}")
     print(f"Mean squared error {output.mse():.4f}")
-    output.show(df)
-#    if(out_path):
-#        utils.make_dir(out_path)
-#    for i,out_i in enumerate(output.iter_slices(10)):
-#        error_hist(**out_i.__dict__)
-#        if(out_path):
-#            plt.savefig(f'{out_path}/{i}.png')
-#        else:
-#            plt.show()
+    img_iter=output.show(df)
+    if(img_iter):
+        plot.show_plots(img_iter,out_path)
         
 def error_hist( names,
                 y_true,
@@ -183,5 +186,5 @@ def error_hist( names,
 regression(["AutoML/data"],
           ["AutoML/output",
            "uci/output"],
-           "linear",
-           "gauss_reg")
+           "gauss",None)
+#           "gauss_reg")
