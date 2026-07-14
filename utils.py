@@ -42,8 +42,11 @@ def dir_paths(in_path,out_path):
         yield path_i,f"{out_path}/{id_i}"
 
 def gini(arr):
-    arr.sort()
-    arr=np.array(arr)
-    index = np.arange(1,arr.shape[0]+1)
-    n = arr.shape[0]     
-    return ((np.sum((2 * index - n  - 1) * arr)) / (n * np.sum(arr)))
+    arr = np.sort(np.asarray(arr))
+    n = len(arr)
+    total = np.sum(arr)
+    if total == 0:
+        return 0.0
+
+    index = np.arange(1, n + 1)
+    return np.sum((2*index - n - 1)*arr) / (n*total)
