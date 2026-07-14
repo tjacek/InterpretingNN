@@ -4,6 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
 import seaborn as sn
 from sklearn.metrics import accuracy_score
+import argparse
 import base,dataset, utils
 
 def compute_shapley(in_path,out_path=None):
@@ -27,12 +28,24 @@ def compute_shapley(in_path,out_path=None):
 def show_heatmap(in_path):
     for path_i in utils.top_files(in_path):
         values = np.loadtxt(path_i)
+        values=norm_matrix(values)
         sn.heatmap(values,cmap="YlGnBu",linewidths=0.5,
                    annot=True,annot_kws={"size": 5}, fmt='g')
         id_i=path_i.split("/")[-1]
         plt.title(id_i)
         plt.show()
 
+def norm_matrix(arr):
+    arr-=np.mean(arr)
+    arr/=np.std(arr)
+    return arr
 
-compute_shapley("AutoML/_data","shapley")	
-#show_heatmap("shapley")
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--compute', action='store_true')
+    parser.add_argument("--heat", type=str,default="shapley")
+    args=parser.parse_args()
+    if(args.compute):
+        raise Exception("Wrong")
+        compute_shapley("AutoML/data","shapley")	
+    show_heatmap(args.heat)
