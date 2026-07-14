@@ -8,25 +8,19 @@ from dataclasses import dataclass,field#asdict
 import dataset,train,utils
 
 @dataclass
-class GPROutput:
+class RegOutput:
     names: list = field(default_factory=list)
     y_true: list = field(default_factory=list)
     y_pred: list = field(default_factory=list)
-    error: list = field(default_factory=list)
-
-    def __len__(self):
-        return len(self.names)
 
     def add( self,
              name_i,
              true_i,
-             pred_i,
-             error_i):
+             pred_i):
         self.names.append(name_i)
         self.y_true.append(true_i)
-        self.y_pred.append(pred_i)
-        self.error.append(error_i)
-
+        self.y_pred.append(pred_i)        
+    
     def raw_error(self):
         return np.array(self.y_true) - np.array(self.y_pred)
 
@@ -37,17 +31,68 @@ class GPROutput:
     def mse(self):
         error=self.raw_error()
         return np.sqrt(np.mean(error**2))
-
+    
     def slice(self,i,step=10):
-        keys=["names","y_true","y_pred","error"]
-        arr=[ self.__dict__[key_i][i*step:(i+1)*step] 
-                for key_i in keys]
-        return self.__class__(*arr)
+        arr={ key_i:self.__dict__[key_i][i*step:(i+1)*step] 
+                for key_i in keys}
+        return self.__class__(**arr)
 
     def iter_slices(self,step=10):
         n_iters=int(np.ceil(len(self) / step))
         for i in range(n_iters):
             yield self.slice(i,step)
+    
+    @classmethod
+    def make(cls,df):
+        output=cls()
+        for train_i,test_i,data_i  in leve_one_out(df):
+            pred_i=output.fit(train_i,test_i)
+            output.add(data_i,test_i.y,pred_i)
+        return output
+
+def leve_one_out(df,norm=True):
+    for i in range(len(df)):
+        train = df.drop(index=i)
+
+        X_train = train.drop(columns=["target", "data"]).to_numpy()
+        y_train = train["target"].to_numpy()
+        train=dataset.Dataset(X_train,y_train)
+
+        X_test = df.iloc[[i]].drop(columns=["target", "data"]).to_numpy()
+        y_test = df.iloc[i]["target"]
+        test=dataset.Dataset(X_test,y_test)
+
+        data_i = df.iloc[i]["data"]
+        if(norm):
+            train.norm()
+            test.norm()
+        yield train,test,data_i 
+
+@dataclass
+class GaussOutput(RegOutput):
+    std: float  = field(default_factory=list)
+    
+    def fit(self,train_i,test_i):
+        kernel =  RBF(length_scale=1.0, 
+                      length_scale_bounds=(1e-2, 1e2))
+        gauss_process = GaussianProcessRegressor(kernel=kernel, 
+                                                    n_restarts_optimizer=9)
+        gauss_process.fit(train_i.X, train_i.y)
+        mean_i, std_i = gauss_process.predict(test_i.X, 
+                                          return_std=True)
+        std.append(std_i)
+        return mean_i[0]
+
+@dataclass
+class LinearOutput(RegOutput):
+    coef: float  = field(default_factory=list)
+
+    def fit(self,train_i,test_i):
+        reg_i = LinearRegression()
+        reg_i.fit(train_i.X,train_i.y)
+        mean_i= reg_i.predict(test_i.X)
+        self.coef.append(reg_i.coef_)
+        return mean_i
 
 def get_input_data(data_path,
                    result_path,
@@ -72,54 +117,26 @@ def to_array(df):
     X=df.to_numpy()
     return X,y
 
-def leve_one_out(df,norm=True):
-    for i in range(len(df)):
-        train = df.drop(index=i)
-
-        X_train = train.drop(columns=["target", "data"]).to_numpy()
-        y_train = train["target"].to_numpy()
-        train=dataset.Dataset(X_train,y_train)
-
-        X_test = df.iloc[[i]].drop(columns=["target", "data"]).to_numpy()
-        y_test = df.iloc[i]["target"]
-        test=dataset.Dataset(X_test,y_test)
-
-        data_i = df.iloc[i]["data"]
-        if(norm):
-            train.norm()
-            test.norm()
-        yield train,test,data_i
-
-def gpr(df):
-    output=GPROutput()
-    for train_i,test_i,data_i  in leve_one_out(df):
-        kernel =  RBF(length_scale=1.0, 
-                      length_scale_bounds=(1e-2, 1e2))
-        gauss_process = GaussianProcessRegressor(kernel=kernel, 
-                                                    n_restarts_optimizer=9)
-        gauss_process.fit(train_i.X, train_i.y)
-    
-        mean_i, std_i = gauss_process.predict(test_i.X, 
-                                              return_std=True)
-        output.add(data_i,test_i.y,mean_i[0],std_i[0])
-
-    return output
-
-def gauss_reg( data_path,
+def regression( data_path,
                result_path,
+               reg_alg="gauss",
                out_path=None):
     df=get_input_data(data_path,result_path)
-    output=gpr(df)
+    if(reg_alg=="gauss"):
+        reg_alg=GaussOutput
+    else:
+        reg_alg=LinearOutput
+    output=reg_alg.make(df)
     print(f"Mean absolute error:{output.abs_error():.4f}")
     print(f"Mean squared error {output.mse():.4f}")
-    if(out_path):
-        utils.make_dir(out_path)
-    for i,out_i in enumerate(output.iter_slices(10)):
-        error_hist(**out_i.__dict__)
-        if(out_path):
-            plt.savefig(f'{out_path}/{i}.png')
-        else:
-            plt.show()
+#    if(out_path):
+#        utils.make_dir(out_path)
+#    for i,out_i in enumerate(output.iter_slices(10)):
+#        error_hist(**out_i.__dict__)
+#        if(out_path):
+#            plt.savefig(f'{out_path}/{i}.png')
+#        else:
+#            plt.show()
         
 def error_hist( names,
                 y_true,
@@ -152,27 +169,9 @@ def error_hist( names,
     plt.legend()
     plt.tight_layout()
 
-#def reg_exp(data_path,result_path):
-#    df=get_input_data(data_path,result_path)
-#    X,y=to_array(df)
-#    reg = LinearRegression().fit(X, y)
-#    reg.fit(X,y)
-#    print(f"R:{reg.score(X, y)}")
-#    cols=df.columns[1:-1]
-#    for name_i,coef_i in zip(cols,reg.coef_):
-#        print(f"{name_i}:{coef_i:.4f}")
-#    y_pred=reg.predict(X)
-#    def helper(arg):
-#        i,pred_i=arg
-#        row_i=df.iloc[i]
-#        data_i,y_i=row_i["data"],row_i["target"]
-#        return [data_i,y_i,pred_i, y_i-pred_i]
-#    df_reg=dataset.make_df(helper,
-#                           enumerate(y_pred),
-#                           ["data","true","pred","res"] )
-#    print(df_reg)
 
-gauss_reg(["AutoML/data"],
+regression(["AutoML/data"],
           ["AutoML/output",
            "uci/output"],
+           "linear",
            "gauss_reg")
