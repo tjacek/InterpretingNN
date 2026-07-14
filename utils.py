@@ -50,3 +50,8 @@ def gini(arr):
 
     index = np.arange(1, n + 1)
     return np.sum((2*index - n - 1)*arr) / (n*total)
+
+def norm_matrix(arr):
+    arr-=np.mean(arr)
+    arr/=np.std(arr)
+    return arr

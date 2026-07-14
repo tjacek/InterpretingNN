@@ -28,17 +28,12 @@ def compute_shapley(in_path,out_path=None):
 def show_heatmap(in_path):
     for path_i in utils.top_files(in_path):
         values = np.loadtxt(path_i)
-        values=norm_matrix(values)
+        values=utils,norm_matrix(values)
         sn.heatmap(values,cmap="YlGnBu",linewidths=0.5,
                    annot=True,annot_kws={"size": 5}, fmt='g')
         id_i=path_i.split("/")[-1]
         plt.title(id_i)
         plt.show()
-
-def norm_matrix(arr):
-    arr-=np.mean(arr)
-    arr/=np.std(arr)
-    return arr
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
