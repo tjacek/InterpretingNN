@@ -94,6 +94,15 @@ class LinearOutput(RegOutput):
         self.coef.append(reg_i.coef_)
         return mean_i
 
+    def show(self,df):
+        coef_arr=np.array(self.coef)
+        value=np.mean(coef_arr,axis=0)
+        var=np.std(coef_arr,axis=0)
+        df=df.drop(["data","target"],axis=1)
+        cols=df.columns
+        for i,col_i in enumerate(cols):
+            print(f"{col_i}:{value[i]:.4f},{var[i]:.4f}")
+
 def get_input_data(data_path,
                    result_path,
                    x_clf="RF",
@@ -129,6 +138,7 @@ def regression( data_path,
     output=reg_alg.make(df)
     print(f"Mean absolute error:{output.abs_error():.4f}")
     print(f"Mean squared error {output.mse():.4f}")
+    output.show(df)
 #    if(out_path):
 #        utils.make_dir(out_path)
 #    for i,out_i in enumerate(output.iter_slices(10)):
