@@ -7,7 +7,7 @@ class GruopOfFeature(object):
         self.features=features
 
     def names(self):
-        names=[]
+        names=["data"]
         for feature_i in self.features:
             names_i= feature_i.names()   
             if(not isinstance(names_i, list)):
@@ -15,10 +15,10 @@ class GruopOfFeature(object):
             names.extend(names_i)
         return names
 
-    def __call__(self,data):
-        values=[]
+    def __call__(self,arg_dict):
+        values=[arg_dict["id"]]
         for feature_i in self.features:
-            values_i= feature_i(data)   
+            values_i= feature_i(arg_dict)   
             if(not isinstance(values_i, list)):
                 values_i=[values_i]
             values.extend(values_i)
@@ -32,6 +32,17 @@ class Feature(ABC):
     def __call__(self,data):
         pass
 
+class Basic(Feature):
+    def names(self):
+        return ["classes", "feats", "samples"]
+
+    def __call__(self,arg_dict):
+        data=arg_dict["data"]
+        data_params=data.params()
+        return data_params.to_list()
+
+
+
 def get_arg_dicts(data_path,matrix_path):
     data_dict= dataset.get_data_dict(data_path)
     matrix_dict=shape.get_matrix_dict(matrix_path)
@@ -41,13 +52,20 @@ def get_arg_dicts(data_path,matrix_path):
                    for key_i in data_dict]
     return args_dicts
 
-def make_desc(in_path):
+def make_desc(data_path,matrix_path):
+    args_dict=get_arg_dicts(data_path,matrix_path)
+    features= GruopOfFeature([Basic()])
+    df=dataset.make_df(helper=features,
+                       iterable=args_dict,
+                       cols=features.names(),
+                       multi=False)
+    print(df)
+
+def _make_desc(in_path):
     lines=[]
     for id_i,path_i in utils.iter_files(in_path):
         values = np.loadtxt(path_i)
         values=np.abs(values)
-#        values=utils.norm_matrix(values)
-#        gini_i=np.mean(values,axis=0)#cls_gini(values)
         values/=np.sum(values,axis=0)
         values=np.amax(values,axis=0)
         values= np.round(values,4)
@@ -66,4 +84,4 @@ def max_mean(values):
     return np.array([ np.amax(v_i)/np.mean(v_i) 
                       for v_i in values.T])
 
-make_desc("shapley")
+make_desc(["AutoML/data","uci/data"], "shapley")
