@@ -1,6 +1,6 @@
 import numpy as np
 from abc import ABC, abstractmethod
-import dataset,utils
+import dataset,shape,utils
 
 class GruopOfFeature(object):
     def __init__(self,features):
@@ -32,20 +32,38 @@ class Feature(ABC):
     def __call__(self,data):
         pass
 
+def get_arg_dicts(data_path,matrix_path):
+    data_dict= dataset.get_data_dict(data_path)
+    matrix_dict=shape.get_matrix_dict(matrix_path)
+    args_dicts = [  { "id":key_i,
+                      "data":data_dict[key_i],
+                      "shape":matrix_dict[key_i] } 
+                   for key_i in data_dict]
+    return args_dicts
 
 def make_desc(in_path):
     lines=[]
     for id_i,path_i in utils.iter_files(in_path):
         values = np.loadtxt(path_i)
-        gini_i=max_mean(values)
-        print(id_i)
-        print(gini_i)
+        values=np.abs(values)
+#        values=utils.norm_matrix(values)
+#        gini_i=np.mean(values,axis=0)#cls_gini(values)
+        values/=np.sum(values,axis=0)
+        values=np.amax(values,axis=0)
+        values= np.round(values,4)
+        gini_i=utils.gini(values)
+        if(gini_i>0.0):
+            print(id_i)
+            print(values)
+            print(gini_i)
+ 
+
 
 def cls_gini(values):
     return np.array([ utils.gini(v_i) for v_i in values.T])
     
 def max_mean(values):
     return np.array([ np.amax(v_i)/np.mean(v_i) 
-                      for v_i in values])
+                      for v_i in values.T])
 
 make_desc("shapley")
