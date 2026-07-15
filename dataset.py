@@ -120,6 +120,9 @@ def make_df(helper,
                                 columns=cols)
     return df 
 
+def get_data_dict(in_path):
+    return { id_i:read_csv(path_i) 
+                for id_i,path_i in utils.iter_files(in_path)}
 
 def make_desc(in_path,verbose=True):
     paths=list(utils.iter_files(in_path))

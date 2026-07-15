@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sn
 from sklearn.metrics import accuracy_score
 import argparse
-import base,dataset, utils
+import base,dataset,plot,utils
 
 def compute_shapley(in_path,out_path=None):
     if(out_path):
@@ -28,12 +28,22 @@ def compute_shapley(in_path,out_path=None):
 def show_heatmap(in_path):
     for path_i in utils.top_files(in_path):
         values = np.loadtxt(path_i)
-        values=utils,norm_matrix(values)
+#        values=utils,norm_matrix(values)
+        values/=np.sum(values,axis=0)
         sn.heatmap(values,cmap="YlGnBu",linewidths=0.5,
                    annot=True,annot_kws={"size": 5}, fmt='g')
         id_i=path_i.split("/")[-1]
         plt.title(id_i)
         plt.show()
+
+def get_matrix_dict(in_path):
+    return { id_i:np.loadtxt(path_i) 
+                for id_i,path_i in utils.iter_files(in_path)}
+#def show_prop(in_path):
+#    def helper(id,path):
+#        values = np.loadtxt(path)
+#        np.arg
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
