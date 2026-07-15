@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
-from sklearn.decomposition import PCA
 from dataclasses import dataclass
 import base,utils
 
@@ -9,6 +8,7 @@ class Dataset(object):
     def __init__(self,X,y=None):
         self.X=X
         self.y=y
+        self._params=None
 
     def __len__(self):
         return len(self.y)
@@ -38,9 +38,11 @@ class Dataset(object):
         return base.Result(y_pred,y_test)
 
     def params(self):
-        return DatasetParams(self.dim(),
-                             len(self),
-                             self.n_cats())
+        if(self._params is None):
+            self._params= DatasetParams(self.dim(),
+                                       len(self),
+                                      self.n_cats())
+        return self._params
 
     def range(self):
         return [ (np.amin(x_i),np.amax(x_i))
@@ -64,16 +66,6 @@ class Dataset(object):
         values=list(sizes.values())
         return max(values)/min(values)
     
-    def pca_feats(self):
-        pca = PCA(n_components=None)
-        pca.fit(self.X)
-        exp_var=pca.explained_variance_ratio_
-        greatest=exp_var[0]
-        cum_var=np.cumsum(exp_var)
-        int_var=(cum_var>0.95).astype(int)
-        thres_var= np.argmax(int_var)/cum_var.shape[0]
-        return greatest,thres_var
-    
     def divide(self,split):
         train=self.select(split.train_index)
         test=self.select(split.test_index)
@@ -91,6 +83,9 @@ class DatasetParams:
     @classmethod
     def from_arr(self,X,y):
         return Dataset(X,y).params()
+
+    def to_list(self):
+        return [self.feats,self.samples,self.cats]
 
 
 def read_csv(in_path:str):

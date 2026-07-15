@@ -1,5 +1,6 @@
 import numpy as np
 from abc import ABC, abstractmethod
+from sklearn.decomposition import PCA
 import dataset,shape,utils
 
 class GruopOfFeature(object):
@@ -41,7 +42,20 @@ class Basic(Feature):
         data_params=data.params()
         return data_params.to_list()
 
+class PcaFeats(Feature):
+    def names(self):
+        return ["pca_max","pca_95"]
 
+    def __call__(self,arg_dict):
+        data=arg_dict["data"]
+        pca = PCA(n_components=None)
+        pca.fit(data.X)
+        exp_var=pca.explained_variance_ratio_
+        greatest=exp_var[0]
+        cum_var=np.cumsum(exp_var)
+        int_var=(cum_var>0.95).astype(int)
+        thres_var= np.argmax(int_var)/cum_var.shape[0]
+        return [greatest,thres_var]
 
 def get_arg_dicts(data_path,matrix_path):
     data_dict= dataset.get_data_dict(data_path)
@@ -54,7 +68,7 @@ def get_arg_dicts(data_path,matrix_path):
 
 def make_desc(data_path,matrix_path):
     args_dict=get_arg_dicts(data_path,matrix_path)
-    features= GruopOfFeature([Basic()])
+    features= GruopOfFeature([Basic(),PcaFeats()])
     df=dataset.make_df(helper=features,
                        iterable=args_dict,
                        cols=features.names(),
