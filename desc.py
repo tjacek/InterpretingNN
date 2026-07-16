@@ -76,6 +76,18 @@ class GINI(Feature):
         data_params=data.params()
         return utils.gini(data_params.sizes())
 
+class Shapley(Feature):
+    def __str__(self):
+        return "Shapley"
+
+    def __call__(self,arg_dict):
+        values=arg_dict["shape"]
+        values=np.abs(values)
+        values/=np.sum(values,axis=0)
+        values=np.amax(values,axis=0)
+#        values= np.round(values,4)
+        return utils.gini(values)
+
 def get_arg_dicts(data_path,matrix_path):
     data_dict= dataset.get_data_dict(data_path)
     matrix_dict=shape.get_matrix_dict(matrix_path)
@@ -89,38 +101,22 @@ def make_desc( data_path,
                matrix_path,
                features_list=None):
     if(features_list is None):
-        features_list=[Basic(),PcaFeats(),IR(),GINI()]
+        features_list=[Basic(),PcaFeats(),IR(),GINI(),Shapley()]
     args_dict=get_arg_dicts(data_path,matrix_path)
     features= GruopOfFeature(features_list)
     df=dataset.make_df(helper=features,
                        iterable=args_dict,
                        cols=features.names(),
                        multi=False)
-    df.sort_values(by="Gini",inplace=True)
+    df.sort_values(by="Shapley",inplace=True)
     print(df)
 
-def _make_desc(in_path):
-    lines=[]
-    for id_i,path_i in utils.iter_files(in_path):
-        values = np.loadtxt(path_i)
-        values=np.abs(values)
-        values/=np.sum(values,axis=0)
-        values=np.amax(values,axis=0)
-        values= np.round(values,4)
-        gini_i=utils.gini(values)
-        if(gini_i>0.0):
-            print(id_i)
-            print(values)
-            print(gini_i)
- 
-
-
-def cls_gini(values):
-    return np.array([ utils.gini(v_i) for v_i in values.T])
+#def cls_gini(values):
+#    return np.array([ utils.gini(v_i) for v_i in values.T])
     
-def max_mean(values):
-    return np.array([ np.amax(v_i)/np.mean(v_i) 
-                      for v_i in values.T])
+#def max_mean(values):
+#    return np.array([ np.amax(v_i)/np.mean(v_i) 
+#                      for v_i in values.T])
 
 if __name__ == '__main__':
     make_desc(["AutoML/data","uci/data"], "shapley")
