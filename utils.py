@@ -55,3 +55,20 @@ def norm_matrix(arr):
     arr-=np.mean(arr)
     arr/=np.std(arr)
     return arr
+
+def slice_list(arr,step=10):
+    n_iters=int(np.ceil(len(arr) / step))
+    return [ arr[(i*step):(i+1)*step]   
+                for i in range(n_iters)]
+
+def dir_fun(fun):
+    def helper(in_path,out_path):
+        if(out_path):
+            make_dir(out_path)
+        for id_i,path_i in iter_files(in_path):
+            if(out_path):
+                out_i=f"{out_path}/{id_i}"
+                fun(path_i,out_i)
+            else:
+                fun(path_i)
+    return helper
