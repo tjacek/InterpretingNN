@@ -2,7 +2,7 @@ import numpy as np
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import RepeatedStratifiedKFold
-import utils
+import dataset,utils
 
 class SplitGroup(object):
     def __init__(self,splits):
@@ -50,6 +50,11 @@ class Split(object):
         self.train_index=train_index
         self.test_index=test_index
     
+    def __call__(self,data):
+        train=data.select(self.train_index)
+        test=data.select(self.test_index)
+        return train,test
+        
     def fit_clf(self,data,clf):
         return data.fit_clf(self.train_index,clf)
 
@@ -74,7 +79,7 @@ class Split(object):
     
     @classmethod
     def random(cls,n_samples,p=0.9):
-        if(type(n_samples)==Dataset):
+        if(type(n_samples)==dataset.Dataset):
             n_samples=len(n_samples)
         train,test=[],[]
         for i in range(n_samples):
@@ -126,3 +131,8 @@ class ResultGroup(object):
         results=[ Result.read(path_i)
                   for path_i in utils.top_files(in_path)]
         return cls(results)
+
+
+def get_split_dict(in_path):
+    return { id_i:SplitGroup.read(f"{path_i}/splits")
+         for id_i,path_i in utils.iter_files(in_path)}

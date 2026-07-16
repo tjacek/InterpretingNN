@@ -1,18 +1,32 @@
 from tqdm import tqdm
 import base,clf,dataset,utils
 
-@utils.dir_fun
-def infl_rf(in_path,out_path=None):
-    print(in_path)
-    data_i=dataset.read_csv(in_path)
-    split_i= base.Split.random(data_i)
-    acc=eval_split(split_i,data_i)
-    infl_i=[]
-    for j in tqdm(range(data_i.dim())):
-    	data_j=data_i.remove_col(j)
-    	acc_j=eval_split(split_i,data_i)
-    	infl_i.append(acc-acc_j)
-    print(infl_i)
+def infl_rf(in_path,split_path,out_path=None):    
+    split_dict=base.get_split_dict(split_path)
+    @utils.dir_fun
+    def infl_rf(in_path,out_path=None):
+        data_i=dataset.read_csv(in_path)
+        id_i=in_path.split("/")[-1]
+#        print(id_i)
+        split_i=split_dict[id_i]
+        result_i,_=split_i(data_i,clf.RF)
+        acc=result_i.get_acc()
+        infl=[]
+        for j in tqdm(range(data_i.dim())):
+            data_j=data_i.remove_col(j)
+            result_j,_=split_i(data_j,clf.RF)
+            infl.append(acc-result_j.get_acc())
+        print(id_i)
+        print(infl)
+    infl_rf(in_path,out_path)
+#        split_i= base.Split.random(data_i)
+#        acc=eval_split(split_i,data_i)
+#        infl_i=[]
+#        for j in tqdm(range(data_i.dim())):
+#    	    data_j=data_i.remove_col(j)
+#    	    acc_j=eval_split(split_i,data_i)
+#    	    infl_i.append(acc-acc_j)
+#        print(infl_i)
 
 def eval_split(split_i,data_i):
     clf_i=clf.RF()
@@ -20,4 +34,6 @@ def eval_split(split_i,data_i):
     result_i=split_i.pred(data_i,clf_i)
     return result_i.get_acc()
 
-infl_rf("uci/data","test")
+infl_rf("uci/data",
+        "uci/output",
+	    "test")
