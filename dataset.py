@@ -39,9 +39,10 @@ class Dataset(object):
 
     def params(self):
         if(self._params is None):
-            self._params= DatasetParams(self.dim(),
-                                       len(self),
-                                      self.n_cats())
+            self._params= DatasetParams( self.dim(),
+                                         len(self),
+                                         self.n_cats(),
+                                         self.class_sizes())
         return self._params
 
     def range(self):
@@ -60,11 +61,6 @@ class Dataset(object):
         for y_i in self.y:
             params[y_i]+=1
         return params
-
-    def IR(self):
-        sizes=self.class_sizes()
-        values=list(sizes.values())
-        return max(values)/min(values)
     
     def divide(self,split):
         train=self.select(split.train_index)
@@ -79,6 +75,7 @@ class DatasetParams:
     feats:int
     samples:int
     cats:int
+    sizes_dict:dict
     
     @classmethod
     def from_arr(self,X,y):
@@ -87,6 +84,8 @@ class DatasetParams:
     def to_list(self):
         return [self.feats,self.samples,self.cats]
 
+    def sizes(self):
+        return list(self.sizes_dict.values())
 
 def read_csv(in_path:str):
     if(type(in_path)==tuple):

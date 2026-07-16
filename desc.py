@@ -57,6 +57,25 @@ class PcaFeats(Feature):
         thres_var= np.argmax(int_var)/cum_var.shape[0]
         return [greatest,thres_var]
 
+class IR(Feature):
+    def __str__(self):
+        return "IR"
+
+    def __call__(self,arg_dict):
+        data=arg_dict["data"]
+        data_params=data.params()
+        sizes=data_params.sizes()
+        return max(sizes)/min(sizes)
+
+class GINI(Feature):
+    def __str__(self):
+        return "Gini"
+
+    def __call__(self,arg_dict):
+        data=arg_dict["data"]
+        data_params=data.params()
+        return utils.gini(data_params.sizes())
+
 def get_arg_dicts(data_path,matrix_path):
     data_dict= dataset.get_data_dict(data_path)
     matrix_dict=shape.get_matrix_dict(matrix_path)
@@ -66,13 +85,18 @@ def get_arg_dicts(data_path,matrix_path):
                    for key_i in data_dict]
     return args_dicts
 
-def make_desc(data_path,matrix_path):
+def make_desc( data_path,
+               matrix_path,
+               features_list=None):
+    if(features_list is None):
+        features_list=[Basic(),PcaFeats(),IR(),GINI()]
     args_dict=get_arg_dicts(data_path,matrix_path)
-    features= GruopOfFeature([Basic(),PcaFeats()])
+    features= GruopOfFeature(features_list)
     df=dataset.make_df(helper=features,
                        iterable=args_dict,
                        cols=features.names(),
                        multi=False)
+    df.sort_values(by="Gini",inplace=True)
     print(df)
 
 def _make_desc(in_path):
@@ -98,4 +122,5 @@ def max_mean(values):
     return np.array([ np.amax(v_i)/np.mean(v_i) 
                       for v_i in values.T])
 
-make_desc(["AutoML/data","uci/data"], "shapley")
+if __name__ == '__main__':
+    make_desc(["AutoML/data","uci/data"], "shapley")
