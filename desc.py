@@ -99,7 +99,8 @@ def get_arg_dicts(data_path,matrix_path):
 
 def make_desc( data_path,
                matrix_path,
-               features_list=None):
+               features_list=None,
+               out_path=None):
     if(features_list is None):
         features_list=[Basic(),PcaFeats(),IR(),GINI(),Shapley()]
     args_dict=get_arg_dicts(data_path,matrix_path)
@@ -108,9 +109,10 @@ def make_desc( data_path,
                        iterable=args_dict,
                        cols=features.names(),
                        multi=False)
-    df.sort_values(by="Shapley",inplace=True)
+    df.sort_values(by="feats",inplace=True)
     print(df)
-
+    if(out_path):
+        df.to_csv(out_path, sep=",", index=False)
 #def cls_gini(values):
 #    return np.array([ utils.gini(v_i) for v_i in values.T])
     
@@ -119,4 +121,8 @@ def make_desc( data_path,
 #                      for v_i in values.T])
 
 if __name__ == '__main__':
-    make_desc(["AutoML/data","uci/data"], "shapley")
+    features_list=[Basic(),IR(),GINI(),PcaFeats()]#,Shapley()]
+    make_desc( ["AutoML/data","uci/data"], 
+               "shapley",
+               features_list,
+               out_path="desc/pca")

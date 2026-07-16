@@ -2,7 +2,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 import numpy as np
-import matplotlib.pyplot as plt
+import pandas as pd
+#import matplotlib.pyplot as plt
 from dataclasses import dataclass,field#asdict
 import dataset,train,plot,utils
 
@@ -53,10 +54,9 @@ class RegOutput:
             output.add(data_i,test_i.y,pred_i)
         return output
 
-def leve_one_out(df,norm=True):
+def leve_one_out(df,norm=False):
     for i in range(len(df)):
         train = df.drop(index=i)
-
         X_train = train.drop(columns=["target", "data"]).to_numpy()
         y_train = train["target"].to_numpy()
         train=dataset.Dataset(X_train,y_train)
@@ -89,7 +89,7 @@ class GaussOutput(RegOutput):
     def show(self,df):
         def img_iter():
             for out_i in self.iter_slices(10):
-                yield error_hist(**out_i.__dict__)
+                yield plot.error_hist(**out_i.__dict__)
         return img_iter()
 
 @dataclass
@@ -112,34 +112,14 @@ class LinearOutput(RegOutput):
         for i,col_i in enumerate(cols):
             print(f"{col_i}:{value[i]:.4f},{var[i]:.4f}")
 
-def get_input_data(data_path,
-                   result_path,
-                   x_clf="RF",
-                   y_clf="TabPFN"):
-    df=dataset.make_desc(data_path,verbose=False)
-    df_dict=train.show_pred(result_path,verbose=False)
-    x_dict=df_dict[x_clf]
-    y_dict=df_dict[y_clf]
-    def helper(row):
-        data_id=row["data"]
-        return x_dict[data_id] - y_dict[data_id]
-    df["target"]=df.apply(helper, axis=1)
-    df["binary"]=df["classes"].apply(lambda c: int(c<3))
-    print(df)
-    return df
-
-def to_array(df):
-    df=df.drop("data",axis=1)
-    y=df["target"].to_numpy()
-    df=df.drop("target",axis=1)
-    X=df.to_numpy()
-    return X,y
-
-def regression( data_path,
-               result_path,
-               reg_alg="gauss",
-               out_path=None):
-    df=get_input_data(data_path,result_path)
+def regression( df_path,
+                result_path,
+                reg_alg="gauss",
+                out_path=None):
+    df=get_input_data(df_path,
+                      result_path,
+                      x_clf="RF",
+                      y_clf="TabPFN")
     if(reg_alg=="gauss"):
         reg_alg=GaussOutput
     else:
@@ -150,41 +130,32 @@ def regression( data_path,
     img_iter=output.show(df)
     if(img_iter):
         plot.show_plots(img_iter,out_path)
-        
-def error_hist( names,
-                y_true,
-                y_pred,
-                error):
-    x = np.arange(len(names))
-    plt.figure(figsize=(12, 6))
 
-    plt.scatter(x, y_true,
-                color="tab:blue",
-                marker="o",
-                label="True value")
+def get_input_data(df_path,
+                   result_path,
+                   x_clf="RF",
+                   y_clf="TabPFN"):
+    df=pd.read_csv(df_path)
+    df_dict=train.show_pred(result_path,verbose=False)
+    x_dict=df_dict[x_clf]
+    y_dict=df_dict[y_clf]
+    def helper(row):
+        data_id=row["data"]
+        return x_dict[data_id] - y_dict[data_id]
+    df["target"]=df.apply(helper, axis=1)
+    df=df.sort_values(by="target")
+    print(df)
+    return df
 
-    plt.errorbar(
-        x,
-        y_pred,
-        yerr=error,
-        fmt="s",
-        color="tab:red",
-        ecolor="black",
-        elinewidth=1.5,
-        capsize=5,
-        label="Prediction ± std"
-    )
-    plt.xticks(x, names, rotation=90)
-    plt.xlabel("Sample")
-    plt.ylabel("Target")
-    plt.title("Gaussian Process Regression - Leave-One-Out")
-    plt.grid(alpha=0.7)
-    plt.legend()
-    plt.tight_layout()
+def to_array(df):
+    df=df.drop("data",axis=1)
+    y=df["target"].to_numpy()
+    df=df.drop("target",axis=1)
+    X=df.to_numpy()
+    return X,y
 
-
-regression(["AutoML/data"],
-          ["AutoML/output",
-           "uci/output"],
+regression( "desc/full",
+            ["AutoML/output",
+             "uci/output"],
            "gauss",None)
 #           "gauss_reg")

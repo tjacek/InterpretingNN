@@ -1,3 +1,4 @@
+import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 import train
@@ -26,11 +27,72 @@ def plot_xy( in_path,
 
 def show_plots(img_iter,out_path=None):
     for i,out_i in enumerate(img_iter):
-#        error_hist(**out_i.__dict__)
         if(out_path):
             plt.savefig(f'{out_path}/{i}.png')
         else:
             plt.show()
+
+def error_hist( names,
+                y_true,
+                y_pred,
+                error):
+    x = np.arange(len(names))
+    plt.figure(figsize=(12, 6))
+
+    plt.scatter(x, y_true,
+                color="tab:blue",
+                marker="o",
+                label="True value")
+
+    plt.errorbar(
+        x,
+        y_pred,
+        yerr=error,
+        fmt="s",
+        color="tab:red",
+        ecolor="black",
+        elinewidth=1.5,
+        capsize=5,
+        label="Prediction ± std"
+    )
+    plt.xticks(x, names, rotation=90)
+    plt.xlabel("Sample")
+    plt.ylabel("Target")
+    plt.title("Gaussian Process Regression - Leave-One-Out")
+    plt.grid(alpha=0.7)
+    plt.legend()
+    plt.tight_layout()
+
+
+def prediction_hist(names,
+                    y_true,
+                    y_pred):
+    x = np.arange(len(names))
+    plt.figure(figsize=(12, 6))
+
+    plt.scatter(
+        x,
+        y_true,
+        color="tab:blue",
+        marker="o",
+        label="True value"
+    )
+
+    plt.scatter(
+        x,
+        y_pred,
+        color="tab:red",
+        marker="s",
+        label="Prediction"
+    )
+
+    plt.xticks(x, names, rotation=90)
+    plt.xlabel("Sample")
+    plt.ylabel("Target")
+#    plt.title("Regression - Leave-One-Out")
+    plt.grid(alpha=0.7)
+    plt.legend()
+    plt.tight_layout()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
