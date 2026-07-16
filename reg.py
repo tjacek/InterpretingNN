@@ -3,7 +3,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 import numpy as np
 import pandas as pd
-#import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
 from dataclasses import dataclass,field#asdict
 import dataset,train,plot,utils
 
@@ -54,21 +54,29 @@ class RegOutput:
             output.add(data_i,test_i.y,pred_i)
         return output
 
-def leve_one_out(df,norm=False):
+def leve_one_out(df,norm=True):
+    df = df.reset_index(drop=True)
     for i in range(len(df)):
-        train = df.drop(index=i)
-        X_train = train.drop(columns=["target", "data"]).to_numpy()
-        y_train = train["target"].to_numpy()
-        train=dataset.Dataset(X_train,y_train)
+        train_df = df.drop(i)
+        test_df = df.iloc[[i]]
 
-        X_test = df.iloc[[i]].drop(columns=["target", "data"]).to_numpy()
-        y_test = df.iloc[i]["target"]
-        test=dataset.Dataset(X_test,y_test)
+        X_train = train_df.drop(columns=["target", "data"]).to_numpy()
+        y_train = train_df["target"].to_numpy()
+        
+        X_test = test_df.drop(columns=["target", "data"]).to_numpy()
+        y_test = test_df["target"].iloc[0]
+        
+        train = dataset.Dataset(X_train, y_train)
+        test = dataset.Dataset(X_test, y_test)
 
-        data_i = df.iloc[i]["data"]
+        data_i = test_df["data"].iloc[0]
         if(norm):
-            train.norm()
-            test.norm()
+            scaler = StandardScaler()
+            train.X = scaler.fit_transform(train.X)
+            test.X = scaler.transform(test.X)
+#            mean_y,std_y=np.mean(train.X),np.std(train.y)  
+#            train.y = (train.y-mean_y)/std_y
+#            test.y = (test.y-mean_y)/std_y
         yield train,test,data_i 
 
 @dataclass
