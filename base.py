@@ -1,6 +1,6 @@
 import numpy as np
 from tqdm import tqdm
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score,f1_score
 from sklearn.model_selection import RepeatedStratifiedKFold
 import dataset,utils
 
@@ -105,7 +105,10 @@ class Result(object):
 
     def get_acc(self):
         return accuracy_score(self.y_pred,self.y_true)
-  
+    
+    def get_f1(self):
+        return f1_score(self.y_pred,self.y_true)
+    
     def save(self,out_path):
         y_pair=np.array([self.y_pred,self.y_true])
         np.savez(out_path,y_pair)
@@ -127,6 +130,11 @@ class ResultGroup(object):
         acc=[ result_i.get_acc() 
                 for result_i in self.indiv_result]
         return np.mean(acc)
+    
+    def get_f1(self):
+        f1=[ result_i.get_f1() 
+                for result_i in self.indiv_result]
+        return np.mean(f1)
 
     def save(self,out_path):
         utils.make_dir(out_path)

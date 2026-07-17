@@ -38,16 +38,16 @@ def infl_binary( in_path,
 
 def eval_split(split_i,data_i):
     result_i,_=split_i(data_i,clf.RF)
-    acc=result_i.get_acc()
+    f1=result_i.get_f1()
     infl=[]
     for j in tqdm(range(data_i.dim())):
           data_j=data_i.remove_col(j)
           result_j,_=split_i(data_j,clf.RF,verbose=False)
-          infl.append(acc-result_j.get_acc())
+          infl.append(f1-result_j.get_f1())
     return np.array(infl)
 
 #infl_binary("uci/ineq",
 #        "uci/output",
-#	    "test")
+#	    "test/f1")
 import shape
-shape.show_heatmap("test")
+shape.show_heatmap("test/f1")
