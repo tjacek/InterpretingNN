@@ -11,9 +11,16 @@ class SplitGroup(object):
     def __len__(self):
         return len(self.splits)
 
-    def __call__(self,data,clf_type):
+    def __call__( self,
+                  data,
+                  clf_type,
+                  verbose=True):
         all_results,all_clfs=[],[]
-        for split_i in tqdm(self.splits):
+        if(verbose):
+            split_iter=tqdm(self.splits)
+        else:
+            split_iter=self.splits
+        for split_i in split_iter:
             clf_i=clf_type()
             split_i.fit_clf(data,clf_i)
             result_i=split_i.pred(data,clf_i)
