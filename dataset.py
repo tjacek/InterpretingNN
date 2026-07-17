@@ -70,6 +70,16 @@ class Dataset(object):
     def select(self,index):
         return Dataset(self.X[index],
                        self.y[index])
+
+    def remove_col(self,i):
+        return Dataset(X=np.delete(self.X,[i],1),
+                       y=self.y)
+
+    def binarize(self,i):
+        binary_y=[ int(y_i==i) 
+                    for y_i in self.y]
+        return Dataset( X=self.X,
+                        y=np.array(binary_y))
 @dataclass
 class DatasetParams:
     feats:int
