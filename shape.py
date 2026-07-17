@@ -2,9 +2,9 @@ import numpy as np
 import shap
 from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
-import seaborn as sn
 from sklearn.metrics import accuracy_score
 import argparse
+import xgboost
 import base,dataset,plot,utils
 
 def compute_shapley(in_path,out_path=None):
@@ -18,27 +18,40 @@ def compute_shapley(in_path,out_path=None):
         train,test=data_i.divide(split_i)
 
         explainer = shap.Explainer(clf_i.predict_proba, 
-         	                      train.X)
+         	                      train.X,
+                                  algorithm="tree")
         shap_values = explainer(test.X,max_evals=620)
         values=np.mean(np.abs(shap_values.values),axis=0)
         if(out_path):
             id_i=path_i.split("/")[-1]
             np.savetxt(f'{out_path}/{id_i}.txt', values, fmt='%f')
 
-def show_heatmap(in_path):
+def xboost_basic(in_path,out_path=None):
+    if(out_path):
+        utils.make_dir(out_path)
     for path_i in utils.top_files(in_path):
-        values = np.loadtxt(path_i)
-#        values=utils,norm_matrix(values)
-        values/=np.sum(values,axis=0)
-        sn.heatmap(values,cmap="YlGnBu",linewidths=0.5,
-                   annot=True,annot_kws={"size": 5}, fmt='g')
-        id_i=path_i.split("/")[-1]
-        plt.title(id_i)
-        plt.show()
+        data_i=dataset.read_csv(path_i)
+        
+        model = xgboost.XGBRegressor().fit(data_i.X,data_i.y)
+        explainer = shap.Explainer(model)
+        shap_values = explainer(data_i.X)
+        print(path_i)
+        print(shap_values.shape)
+        print(shap_values[0].shape)
+#        shap.plots.waterfall(shap_values[0])
+        shap.plots.beeswarm(shap_values)
 
-def get_matrix_dict(in_path):
-    return { id_i:np.loadtxt(path_i) 
-                for id_i,path_i in utils.iter_files(in_path)}
+def xboost_shapley(in_path,out_path=None):
+    if(out_path):
+        utils.make_dir(out_path)
+    for path_i in utils.top_files(in_path):
+        data_i=dataset.read_csv(path_i)
+        
+        model = xgboost.XGBRegressor().fit(data_i.X,data_i.y)
+        explainer = shap.Explainer(model)
+        shap_values = explainer(data_i.X)
+        print(path_i)
+
 #def show_prop(in_path):
 #    def helper(id,path):
 #        values = np.loadtxt(path)
@@ -51,6 +64,7 @@ if __name__ == '__main__':
     parser.add_argument("--heat", type=str,default="shapley")
     args=parser.parse_args()
     if(args.compute):
-        raise Exception("Wrong")
-        compute_shapley("AutoML/data","shapley")	
-    show_heatmap(args.heat)
+#        raise Exception("Wrong")
+        xboost_shapley([#"AutoML/data",
+                        "uci/data"],"shapley/xboost")	
+#    show_heatmap(args.heat)
