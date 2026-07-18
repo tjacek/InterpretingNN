@@ -103,6 +103,8 @@ def show_heatmap(in_path,out_path=None):
 #        values=utils,norm_matrix(values)
 #        values/=np.sum(values,axis=0)
 #        sn.heatmap(values)
+        print(id_i)
+        values=ordered_arr(values)
         sn.heatmap(values,
                    cmap="YlGnBu",
                    annot=False)#,
@@ -119,10 +121,15 @@ def get_matrix_dict(in_path):
     return { id_i:np.loadtxt(path_i) 
                 for id_i,path_i in utils.iter_files(in_path)}
 
+def ordered_arr(matrix):
+    matrix = matrix[:, np.argsort(matrix.mean(axis=0))]
+    matrix = matrix[np.argsort(matrix.mean(axis=1)), :]
+    return matrix
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str,default="matrix/infl")
-    parser.add_argument("--output", type=str,default="matrix/inf_plot")
+    parser.add_argument("--output", type=str,default=None)#"matrix/inf_ordered")
     args=parser.parse_args()
     show_heatmap(args.input,
                  args.output)
