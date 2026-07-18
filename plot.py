@@ -95,16 +95,16 @@ def prediction_hist(names,
     plt.legend()
     plt.tight_layout()
 
-def show_heatmap(in_path,out_path=None):
+def show_heatmap(in_path,
+                 out_path=None,
+                 transforms=None):
     if(out_path):
         utils.make_dir(out_path)
     for id_i,path_i in utils.iter_files(in_path):
         values = np.loadtxt(path_i)
-#        values=utils,norm_matrix(values)
-#        values/=np.sum(values,axis=0)
-#        sn.heatmap(values)
+
         print(id_i)
-        values=ordered_arr(values)
+        values = transform(values, transforms)
         sn.heatmap(values,
                    cmap="YlGnBu",
                    annot=False)#,
@@ -117,6 +117,13 @@ def show_heatmap(in_path,out_path=None):
         else:
             plt.show()
 
+def transform(values, transforms):
+    if(not transforms):
+        return values
+    for name in transforms:
+        values = TRANSFORMS[name](values)
+    return values
+
 def get_matrix_dict(in_path):
     return { id_i:np.loadtxt(path_i) 
                 for id_i,path_i in utils.iter_files(in_path)}
@@ -126,13 +133,29 @@ def ordered_arr(matrix):
     matrix = matrix[np.argsort(matrix.mean(axis=1)), :]
     return matrix
 
+TRANSFORMS = {
+    "order": ordered_arr,
+    "abs": np.abs,
+    "square": lambda x: x*x ,
+    "normalize": lambda x: x / np.max(x),
+}
+
+#        values=utils,norm_matrix(values)
+#        values/=np.sum(values,axis=0)
+#        sn.heatmap(values)
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str,default="matrix/infl")
     parser.add_argument("--output", type=str,default=None)#"matrix/inf_ordered")
+    parser.add_argument("--trans", type=str,default=None)
     args=parser.parse_args()
+    if(args.trans):
+        transforms=args.trans.split("-")
+    else:
+        transforms=None
     show_heatmap(args.input,
-                 args.output)
+                 args.output,
+                 transforms)
 #    parser.add_argument("--x", type=str,default="RF")
 #    parser.add_argument("--y", type=str,default="TabPFN")
 #    args=parser.parse_args()
