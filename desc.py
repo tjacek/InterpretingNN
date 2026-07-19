@@ -113,6 +113,19 @@ def make_desc( data_path,
     print(df)
     if(out_path):
         df.to_csv(out_path, sep=",", index=False)
+
+import plot
+import matplotlib.pyplot as plt
+def plot_xy(x_path,y_path):
+    x_dict=plot.get_matrix_dict(x_path)
+    y_dict=plot.get_matrix_dict(y_path)
+    for key_i in x_dict:
+        x_i=x_dict[key_i].flatten()
+        y_i=y_dict[key_i].flatten()
+        plt.figure(figsize=(12, 6))
+        plt.scatter(x_i, y_i)
+        plt.title(key_i)
+        plt.show()
 #def cls_gini(values):
 #    return np.array([ utils.gini(v_i) for v_i in values.T])
     
@@ -121,8 +134,9 @@ def make_desc( data_path,
 #                      for v_i in values.T])
 
 if __name__ == '__main__':
-    features_list=[Basic(),IR(),GINI(),PcaFeats()]#,Shapley()]
-    make_desc( ["AutoML/data","uci/data"], 
-               "shapley",
-               features_list,
-               out_path="desc/pca")
+     plot_xy("matrix/infl","matrix/shapley")
+#    features_list=[Basic(),IR(),GINI(),PcaFeats()]#,Shapley()]
+#    make_desc( ["AutoML/data","uci/data"], 
+#               "shapley",
+#               features_list,
+#               out_path="desc/pca")
