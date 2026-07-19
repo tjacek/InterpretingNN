@@ -116,15 +116,28 @@ def make_desc( data_path,
 
 import plot
 import matplotlib.pyplot as plt
+from scipy.stats import pearsonr
+
 def plot_xy(x_path,y_path):
     x_dict=plot.get_matrix_dict(x_path)
     y_dict=plot.get_matrix_dict(y_path)
     for key_i in x_dict:
         x_i=x_dict[key_i].flatten()
         y_i=y_dict[key_i].flatten()
+
+        r, p = pearsonr(x_i, y_i)
         plt.figure(figsize=(12, 6))
         plt.scatter(x_i, y_i)
         plt.title(key_i)
+        plt.xlabel(x_path)
+        plt.ylabel(y_path)
+        plt.figtext(
+            0.5,
+            0.01,
+            f"Pearson correlation: r = {r:.4f}, p = {p:.3e}",
+            ha="center",
+            fontsize=11
+        )
         plt.show()
 #def cls_gini(values):
 #    return np.array([ utils.gini(v_i) for v_i in values.T])
