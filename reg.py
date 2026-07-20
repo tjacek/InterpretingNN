@@ -1,11 +1,13 @@
 from sklearn.linear_model import LinearRegression
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree import DecisionTreeRegressor,plot_tree
+#import sklearn.tree
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from dataclasses import dataclass,field#asdict
+import matplotlib.pyplot as plt
 import dataset,train,plot,utils
 
 @dataclass
@@ -55,7 +57,7 @@ class RegAlg:
             output.add(data_i,test_i.y,pred_i)
         return output
 
-def leve_one_out(df,norm=False):
+def leve_one_out(df,norm=True):
     df = df.reset_index(drop=True)
     for i in range(len(df)):
         train_df = df.drop(i)
@@ -121,16 +123,32 @@ class LinearAlg(RegAlg):
         for i,col_i in enumerate(cols):
             print(f"{col_i}:{value[i]:.4f},{var[i]:.4f}")
 
-@dataclass
 class TreeAlg(RegAlg):
+    def __init__(self):
+        super().__init__()
+        self.reg=None
+
     def fit(self,train_i,test_i):
-        reg_i = DecisionTreeRegressor(max_depth=4, random_state=42)
-        reg_i.fit(train_i.X,train_i.y)
-        pred_i= reg_i.predict(test_i.X)
-        return pred_i
+        self.reg = DecisionTreeRegressor(max_depth=4, 
+                                          random_state=42)
+        self.reg.fit(train_i.X,train_i.y)
+        pred= self.reg.predict(test_i.X)
+        return pred
 
     def show(self,df):
-        pass
+        df=df.drop(["data","target"],axis=1)
+        cols=df.columns     
+        plt.figure(figsize=(20, 10))
+        plot_tree(
+                  self.reg,
+                  feature_names=cols,
+                  filled=True,
+                  rounded=True,
+                  fontsize=10
+               )
+        plt.title("Decision Tree Structure")
+        plt.show()
+
 def regression( df_path,
                 result_path,
                 reg_alg="gauss",
@@ -175,7 +193,7 @@ def to_array(df):
     X=df.to_numpy()
     return X,y
 
-regression( "desc/pca",
+regression( "desc/full2",
             ["AutoML/output",
              "uci/output"],
            "tree",None)
