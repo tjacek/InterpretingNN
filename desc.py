@@ -1,7 +1,8 @@
 import numpy as np
 from abc import ABC, abstractmethod
 from sklearn.decomposition import PCA
-import dataset,shape,utils
+from scipy.stats import pearsonr
+import dataset,plot,shape,utils
 
 class GruopOfFeature(object):
     def __init__(self,features):
@@ -114,9 +115,6 @@ def make_desc( data_path,
     if(out_path):
         df.to_csv(out_path, sep=",", index=False)
 
-import plot
-import matplotlib.pyplot as plt
-from scipy.stats import pearsonr
 
 def plot_xy(x_path,y_path):
     x_dict=plot.get_matrix_dict(x_path)
@@ -124,21 +122,11 @@ def plot_xy(x_path,y_path):
     for key_i in x_dict:
         x_i=x_dict[key_i].flatten()
         y_i=y_dict[key_i].flatten()
+        plot.plot_xy( x_i,y_i,
+                      title=key_i, 
+                      x_label=x_path,
+                      y_label=y_path)
 
-        r, p = pearsonr(x_i, y_i)
-        plt.figure(figsize=(12, 6))
-        plt.scatter(x_i, y_i)
-        plt.title(key_i)
-        plt.xlabel(x_path)
-        plt.ylabel(y_path)
-        plt.figtext(
-            0.5,
-            0.01,
-            f"Pearson correlation: r = {r:.4f}, p = {p:.3e}",
-            ha="center",
-            fontsize=11
-        )
-        plt.show()
 #def cls_gini(values):
 #    return np.array([ utils.gini(v_i) for v_i in values.T])
     

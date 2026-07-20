@@ -1,10 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sn
+from scipy.stats import pearsonr
 import argparse
 import train,utils
 
-def plot_xy( in_path,
+def plot_txt( in_path,
 	         x_clf="MLP",
 	         y_clf="TabPFN"):
     output_dict=train.show_pred(in_path,verbose=False)
@@ -24,6 +25,25 @@ def plot_xy( in_path,
              1.1*max(y_dict.values()))
     plt.axline((0, 0), (1, 1))
     plt.grid()
+    plt.show()
+
+def plot_xy( x,y,
+             title="Scatter plot", 
+             x_label="x",
+             y_label="y"):
+    r, p = pearsonr(x, y)
+    plt.figure(figsize=(12, 6))
+    plt.scatter(x, y)
+    plt.title(title)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.figtext(
+            0.5,
+            0.01,
+            f"Pearson correlation: r = {r:.4f}, p = {p:.3e}",
+            ha="center",
+            fontsize=11
+    )
     plt.show()
 
 def show_plots(img_iter,out_path=None):
@@ -142,7 +162,7 @@ TRANSFORMS = {
 
 #        values=utils,norm_matrix(values)
 #        values/=np.sum(values,axis=0)
-#        sn.heatmap(values)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str,default="matrix/infl")
