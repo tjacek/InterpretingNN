@@ -2,6 +2,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 from sklearn.decomposition import PCA
 from scipy.stats import pearsonr
+import argparse
 import dataset,plot,shape,utils
 
 class GruopOfFeature(object):
@@ -36,7 +37,7 @@ class Feature(ABC):
 
 class Basic(Feature):
     def names(self):
-        return ["classes", "feats", "samples"]
+        return ["classes","samples", "feats" ]
 
     def __call__(self,arg_dict):
         data=arg_dict["data"]
@@ -70,7 +71,7 @@ class IR(Feature):
 
 class GINI(Feature):
     def __str__(self):
-        return "Gini"
+        return "gini"
 
     def __call__(self,arg_dict):
         data=arg_dict["data"]
@@ -79,41 +80,46 @@ class GINI(Feature):
 
 class Shapley(Feature):
     def __str__(self):
-        return "Shapley"
+        return "shapley"
 
     def __call__(self,arg_dict):
-        values=arg_dict["shape"]
+        values=arg_dict["shapley"]
         values=np.abs(values)
         values/=np.sum(values,axis=0)
         values=np.amax(values,axis=0)
-#        values= np.round(values,4)
         return utils.gini(values)
 
-def get_arg_dicts(data_path,matrix_path):
-    data_dict= dataset.get_data_dict(data_path)
-    matrix_dict=shape.get_matrix_dict(matrix_path)
-    args_dicts = [  { "id":key_i,
-                      "data":data_dict[key_i],
-                      "shape":matrix_dict[key_i] } 
-                   for key_i in data_dict]
-    return args_dicts
-
-def make_desc( data_path,
-               matrix_path,
+def make_desc( conf_path,
                features_list=None,
+               order_by="feats",
                out_path=None):
+    conf_dict=utils.read_json(conf_path)
+    args_dict=get_arg_dicts(conf_dict["data"],
+                             conf_dict["sources"])
     if(features_list is None):
         features_list=[Basic(),PcaFeats(),IR(),GINI(),Shapley()]
-    args_dict=get_arg_dicts(data_path,matrix_path)
     features= GruopOfFeature(features_list)
-    df=dataset.make_df(helper=features,
-                       iterable=args_dict,
-                       cols=features.names(),
-                       multi=False)
-    df.sort_values(by="feats",inplace=True)
-    print(df)
+    df=dataset.make_df( helper=features,
+                        iterable=args_dict,
+                        cols=features.names(),
+                        multi=False)
+    df.sort_values(by=order_by,inplace=True)
+    print(df.round(4))
     if(out_path):
         df.to_csv(out_path, sep=",", index=False)
+
+def get_arg_dicts(data_path,sources):
+    data=dataset.get_data_dict(data_path)
+    source_dicts={"data":data} 
+    for type_i,path_i in sources:
+        source_dicts[type_i]=plot.get_matrix_dict(path_i)
+    arg_dicts=[]
+    for id_i in data:
+        arg_i={"id":id_i}
+        for key_i,source_i in source_dicts.items():
+            arg_i[key_i]=source_i[id_i]
+        arg_dicts.append(arg_i)
+    return arg_dicts
 
 
 def plot_xy(x_path,y_path):
@@ -135,7 +141,14 @@ def plot_xy(x_path,y_path):
 #                      for v_i in values.T])
 
 if __name__ == '__main__':
-     plot_xy("matrix/infl","matrix/shapley")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--conf", type=str,default="matrix/conf.json")
+    parser.add_argument("--order", type=str,default="gini")
+
+    args=parser.parse_args()
+    make_desc(args.conf,
+              order_by=args.order)
+#     plot_xy("matrix/infl","matrix/shapley")
 #    features_list=[Basic(),IR(),GINI(),PcaFeats()]#,Shapley()]
 #    make_desc( ["AutoML/data","uci/data"], 
 #               "shapley",

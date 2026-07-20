@@ -1,4 +1,5 @@
 import numpy as np
+import json
 import os,re
 
 def make_dir(path):
@@ -72,3 +73,7 @@ def dir_fun(fun):
             else:
                 fun(path_i)
     return helper
+
+def read_json(in_path):
+    with open(in_path) as json_data:
+        return json.load(json_data)
