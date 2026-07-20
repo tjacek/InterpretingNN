@@ -89,6 +89,20 @@ class Shapley(Feature):
         values=np.amax(values,axis=0)
         return utils.gini(values)
 
+class Corel(Feature):
+    def __str__(self):
+        return "corel"
+    
+    def __call__(self,arg_dict):
+        shapley=arg_dict["shapley"]
+        ablat=arg_dict["ablat"]
+        x=shapley.flatten()
+        y=ablat.flatten()
+        r, p = pearsonr(x, y)
+        if(np.isnan(r)):
+            r=0.0
+        return r
+
 def make_desc( conf_path,
                features_list=None,
                order_by="feats",
@@ -97,7 +111,7 @@ def make_desc( conf_path,
     args_dict=get_arg_dicts(conf_dict["data"],
                              conf_dict["sources"])
     if(features_list is None):
-        features_list=[Basic(),PcaFeats(),IR(),GINI(),Shapley()]
+        features_list=[Basic(),PcaFeats(),IR(),GINI()]
     features= GruopOfFeature(features_list)
     df=dataset.make_df( helper=features,
                         iterable=args_dict,
@@ -133,24 +147,14 @@ def plot_xy(x_path,y_path):
                       x_label=x_path,
                       y_label=y_path)
 
-#def cls_gini(values):
-#    return np.array([ utils.gini(v_i) for v_i in values.T])
-    
-#def max_mean(values):
-#    return np.array([ np.amax(v_i)/np.mean(v_i) 
-#                      for v_i in values.T])
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--conf", type=str,default="matrix/conf.json")
     parser.add_argument("--order", type=str,default="gini")
-
+    parser.add_argument("--out", type=str,default="desc/full2")
+    features_list=[Basic(),IR(),GINI(),PcaFeats(),Corel(),Shapley()]
     args=parser.parse_args()
-    make_desc(args.conf,
-              order_by=args.order)
-#     plot_xy("matrix/infl","matrix/shapley")
-#    features_list=[Basic(),IR(),GINI(),PcaFeats()]#,Shapley()]
-#    make_desc( ["AutoML/data","uci/data"], 
-#               "shapley",
-#               features_list,
-#               out_path="desc/pca")
+    make_desc( args.conf,
+               features_list=features_list,
+               order_by=args.order,
+               out_path=args.out)

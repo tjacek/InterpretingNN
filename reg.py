@@ -8,7 +8,7 @@ from dataclasses import dataclass,field#asdict
 import dataset,train,plot,utils
 
 @dataclass
-class RegOutput:
+class RegAlg:
     names: list = field(default_factory=list)
     y_true: list = field(default_factory=list)
     y_pred: list = field(default_factory=list)
@@ -80,7 +80,7 @@ def leve_one_out(df,norm=True):
         yield train,test,data_i 
 
 @dataclass
-class GaussOutput(RegOutput):
+class GaussAlg(RegAlg):
     error: float  = field(default_factory=list)
     
     def fit(self,train_i,test_i):
@@ -101,7 +101,7 @@ class GaussOutput(RegOutput):
         return img_iter()
 
 @dataclass
-class LinearOutput(RegOutput):
+class LinearAlg(RegAlg):
     coef: float  = field(default_factory=list)
 
     def fit(self,train_i,test_i):
@@ -129,9 +129,9 @@ def regression( df_path,
                       x_clf="RF",
                       y_clf="TabPFN")
     if(reg_alg=="gauss"):
-        reg_alg=GaussOutput
+        reg_alg=GaussAlg
     else:
-        reg_alg=LinearOutput
+        reg_alg=LinearAlg
     output=reg_alg.make(df)
     print(f"Mean absolute error:{output.abs_error():.4f}")
     print(f"Mean squared error {output.mse():.4f}")
