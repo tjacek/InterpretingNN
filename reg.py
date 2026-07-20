@@ -1,4 +1,5 @@
 from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 import numpy as np
@@ -54,7 +55,7 @@ class RegAlg:
             output.add(data_i,test_i.y,pred_i)
         return output
 
-def leve_one_out(df,norm=True):
+def leve_one_out(df,norm=False):
     df = df.reset_index(drop=True)
     for i in range(len(df)):
         train_df = df.drop(i)
@@ -120,6 +121,16 @@ class LinearAlg(RegAlg):
         for i,col_i in enumerate(cols):
             print(f"{col_i}:{value[i]:.4f},{var[i]:.4f}")
 
+@dataclass
+class TreeAlg(RegAlg):
+    def fit(self,train_i,test_i):
+        reg_i = DecisionTreeRegressor(max_depth=4, random_state=42)
+        reg_i.fit(train_i.X,train_i.y)
+        pred_i= reg_i.predict(test_i.X)
+        return pred_i
+
+    def show(self,df):
+        pass
 def regression( df_path,
                 result_path,
                 reg_alg="gauss",
@@ -130,6 +141,8 @@ def regression( df_path,
                       y_clf="TabPFN")
     if(reg_alg=="gauss"):
         reg_alg=GaussAlg
+    elif(reg_alg=="tree"):
+        reg_alg=TreeAlg
     else:
         reg_alg=LinearAlg
     output=reg_alg.make(df)
@@ -162,8 +175,8 @@ def to_array(df):
     X=df.to_numpy()
     return X,y
 
-regression( "desc/full",
+regression( "desc/pca",
             ["AutoML/output",
              "uci/output"],
-           "gauss",None)
+           "tree",None)
 #           "gauss_reg")
