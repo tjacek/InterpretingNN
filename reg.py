@@ -3,6 +3,8 @@ from sklearn.tree import DecisionTreeRegressor,plot_tree
 #import sklearn.tree
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score,f1_score
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -56,6 +58,10 @@ class RegAlg:
             pred_i=output.fit(train_i,test_i)
             output.add(data_i,test_i.y,pred_i)
         return output
+    
+    def print_err(self):
+        print(f"Mean absolute error:{self.abs_error():.4f}")
+        print(f"Mean squared error {self.mse():.4f}")
 
 def leve_one_out(df,norm=True):
     df = df.reset_index(drop=True)
@@ -81,6 +87,10 @@ def leve_one_out(df,norm=True):
 #            train.y = (train.y-mean_y)/std_y
 #            test.y = (test.y-mean_y)/std_y
         yield train,test,data_i 
+
+def get_cols(df):
+    df=df.drop(["data","target"],axis=1)
+    return df.columns
 
 @dataclass
 class GaussAlg(RegAlg):
@@ -118,9 +128,7 @@ class LinearAlg(RegAlg):
         coef_arr=np.array(self.coef)
         value=np.mean(coef_arr,axis=0)
         var=np.std(coef_arr,axis=0)
-        df=df.drop(["data","target"],axis=1)
-        cols=df.columns
-        for i,col_i in enumerate(cols):
+        for i,col_i in enumerate(get_cols(df)):
             print(f"{col_i}:{value[i]:.4f},{var[i]:.4f}")
 
 class TreeAlg(RegAlg):
@@ -135,19 +143,43 @@ class TreeAlg(RegAlg):
         pred= self.reg.predict(test_i.X)
         return pred
 
-    def show(self,df):
-        df=df.drop(["data","target"],axis=1)
-        cols=df.columns     
+    def show(self,df):   
         plt.figure(figsize=(20, 10))
         plot_tree(
                   self.reg,
-                  feature_names=cols,
+                  feature_names=get_cols(df),
                   filled=True,
                   rounded=True,
                   fontsize=10
                )
         plt.title("Decision Tree Structure")
         plt.show()
+
+@dataclass
+class LogisticAlg(RegAlg):
+    coef: float  = field(default_factory=list)
+
+    def fit(self,train_i,test_i):
+        reg_i = LogisticRegression(solver='liblinear')
+        train_i.y=train_i.y.astype(int)
+        reg_i.fit(train_i.X,train_i.y)
+        mean_i= reg_i.predict(test_i.X)
+        self.coef.append(reg_i.coef_)
+        return mean_i[0]
+
+    def show(self,df):
+        pairs= zip(self.y_true,self.y_pred)
+        cat_dict={i:[]  for i in list(set(self.y_true))}
+        for i,(true_i,pred_i) in enumerate(pairs):
+            if(true_i!=pred_i):
+                cat_dict[true_i].append(self.names[i])
+        print(cat_dict)
+
+    def print_err(self):
+        acc=accuracy_score(self.y_true,self.y_pred)
+        f1=f1_score(self.y_true,self.y_pred)
+        print(f"Mean absolute error:{acc:.4f}")
+        print(f"Mean squared error {f1:.4f}")
 
 def regression( df_path,
                 result_path,
@@ -160,8 +192,7 @@ def regression( df_path,
                       discreet=True)
     reg_alg=get_reg_alg(alg_type)
     output=reg_alg.make(df)
-    print(f"Mean absolute error:{output.abs_error():.4f}")
-    print(f"Mean squared error {output.mse():.4f}")
+    output.print_err()
     img_iter=output.show(df)
     if(img_iter):
         plot.show_plots(img_iter,out_path)
@@ -171,6 +202,8 @@ def get_reg_alg(alg_type):
         return GaussAlg
     elif(alg_type=="tree"):
         return TreeAlg
+    elif(alg_type=="logistic"):
+        return LogisticAlg
     else:
         return LinearAlg
 
@@ -200,8 +233,8 @@ def to_array(df):
     X=df.to_numpy()
     return X,y
 
-regression( "desc/full",
+regression( "desc/ineq",
             ["AutoML/output",
              "uci/output"],
-           "gauss",None)
+           "logistic",None)
 #           "gauss_reg")
