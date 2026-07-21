@@ -151,18 +151,14 @@ class TreeAlg(RegAlg):
 
 def regression( df_path,
                 result_path,
-                reg_alg="gauss",
+                alg_type="gauss",
                 out_path=None):
     df=get_input_data(df_path,
                       result_path,
                       x_clf="RF",
-                      y_clf="TabPFN")
-    if(reg_alg=="gauss"):
-        reg_alg=GaussAlg
-    elif(reg_alg=="tree"):
-        reg_alg=TreeAlg
-    else:
-        reg_alg=LinearAlg
+                      y_clf="TabPFN",
+                      discreet=True)
+    reg_alg=get_reg_alg(alg_type)
     output=reg_alg.make(df)
     print(f"Mean absolute error:{output.abs_error():.4f}")
     print(f"Mean squared error {output.mse():.4f}")
@@ -170,10 +166,19 @@ def regression( df_path,
     if(img_iter):
         plot.show_plots(img_iter,out_path)
 
+def get_reg_alg(alg_type):
+    if(alg_type=="gauss"):
+        return GaussAlg
+    elif(alg_type=="tree"):
+        return TreeAlg
+    else:
+        return LinearAlg
+
 def get_input_data(df_path,
                    result_path,
                    x_clf="RF",
-                   y_clf="TabPFN"):
+                   y_clf="TabPFN",
+                   discreet=False):
     df=pd.read_csv(df_path)
     df_dict=train.show_pred(result_path,verbose=False)
     x_dict=df_dict[x_clf]
@@ -182,6 +187,8 @@ def get_input_data(df_path,
         data_id=row["data"]
         return x_dict[data_id] - y_dict[data_id]
     df["target"]=df.apply(helper, axis=1)
+    if(discreet):
+        df["target"]=df.apply(lambda x:int(x["target"]>0), axis=1)
     df=df.sort_values(by="target")
     print(df)
     return df
@@ -193,8 +200,8 @@ def to_array(df):
     X=df.to_numpy()
     return X,y
 
-regression( "desc/full2",
+regression( "desc/full",
             ["AutoML/output",
              "uci/output"],
-           "tree",None)
+           "gauss",None)
 #           "gauss_reg")
