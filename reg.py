@@ -1,5 +1,5 @@
 from sklearn.linear_model import LinearRegression
-from sklearn.tree import DecisionTreeRegressor,plot_tree
+from sklearn.tree import DecisionTreeRegressor,plot_tree,DecisionTreeClassifier
 #import sklearn.tree
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import dataset,train,plot,utils
 
 @dataclass
-class RegAlg:
+class LearningAlg:
     names: list = field(default_factory=list)
     y_true: list = field(default_factory=list)
     y_pred: list = field(default_factory=list)
@@ -28,18 +28,7 @@ class RegAlg:
         self.names.append(name_i)
         self.y_true.append(true_i)
         self.y_pred.append(pred_i)        
-    
-    def raw_error(self):
-        return np.array(self.y_true) - np.array(self.y_pred)
-
-    def abs_error(self):
-        abs_error=np.abs(self.raw_error())
-        return np.mean(abs_error)
-
-    def mse(self):
-        error=self.raw_error()
-        return np.sqrt(np.mean(error**2))
-    
+        
     def slice(self,i,step=10):
 
         arr={ key_i:self.__dict__[key_i][i*step:(i+1)*step] 
@@ -58,10 +47,30 @@ class RegAlg:
             pred_i=output.fit(train_i,test_i)
             output.add(data_i,test_i.y,pred_i)
         return output
-    
+
+class RegAlg(LearningAlg):
+    def raw_error(self):
+        return np.array(self.y_true) - np.array(self.y_pred)
+
+    def abs_error(self):
+        abs_error=np.abs(self.raw_error())
+        return np.mean(abs_error)
+
+    def mse(self):
+        error=self.raw_error()
+        return np.sqrt(np.mean(error**2))
+
     def print_err(self):
         print(f"Mean absolute error:{self.abs_error():.4f}")
         print(f"Mean squared error {self.mse():.4f}")
+
+
+class ClfAlg(LearningAlg):
+    def print_err(self):
+        acc=accuracy_score(self.y_true,self.y_pred)
+        f1=f1_score(self.y_true,self.y_pred)
+        print(f"Accuracy:{acc:.4f}")
+        print(f"F1-score {f1:.4f}")
 
 def leve_one_out(df,norm=True):
     df = df.reset_index(drop=True)
@@ -125,13 +134,16 @@ class LinearAlg(RegAlg):
         return mean_i
 
     def show(self,df):
-        coef_arr=np.array(self.coef)
-        value=np.mean(coef_arr,axis=0)
-        var=np.std(coef_arr,axis=0)
-        for i,col_i in enumerate(get_cols(df)):
-            print(f"{col_i}:{value[i]:.4f},{var[i]:.4f}")
+        print_coeff(self.coef,get_cols(df))
 
-class TreeAlg(RegAlg):
+def print_coeff(coef,names):
+    coef_arr=np.array(coef)
+    value=np.mean(coef_arr,axis=0)
+    var=np.std(coef_arr,axis=0)
+    for i,col_i in enumerate(names):
+        print(f"{col_i}:{value[i]:.4f},{var[i]:.4f}")
+
+class RegTreeAlg(RegAlg):
     def __init__(self):
         super().__init__()
         self.reg=None
@@ -155,8 +167,33 @@ class TreeAlg(RegAlg):
         plt.title("Decision Tree Structure")
         plt.show()
 
+class TreeAlg(ClfAlg):
+    def __init__(self):
+        super().__init__()
+        self.reg=None
+
+    def fit(self,train_i,test_i):
+        self.reg = DecisionTreeClassifier(max_depth=4, 
+                                          random_state=42)
+        self.reg.fit(train_i.X,train_i.y)
+        pred= self.reg.predict(test_i.X)
+        return pred
+
+    def show(self,df):
+        print(df)
+        plt.figure(figsize=(20, 10))
+        plot_tree(
+                  self.reg,
+                  feature_names=get_cols(df),
+                  filled=True,
+                  rounded=True,
+                  fontsize=10
+               )
+        plt.title("Decision Tree Structure")
+        plt.show()
+
 @dataclass
-class LogisticAlg(RegAlg):
+class LogisticAlg(ClfAlg):
     coef: float  = field(default_factory=list)
 
     def fit(self,train_i,test_i):
@@ -164,22 +201,17 @@ class LogisticAlg(RegAlg):
         train_i.y=train_i.y.astype(int)
         reg_i.fit(train_i.X,train_i.y)
         mean_i= reg_i.predict(test_i.X)
-        self.coef.append(reg_i.coef_)
+        self.coef.append(reg_i.coef_.flatten())
         return mean_i[0]
 
     def show(self,df):
+        print_coeff(self.coef,get_cols(df))
         pairs= zip(self.y_true,self.y_pred)
         cat_dict={i:[]  for i in list(set(self.y_true))}
         for i,(true_i,pred_i) in enumerate(pairs):
             if(true_i!=pred_i):
                 cat_dict[true_i].append(self.names[i])
         print(cat_dict)
-
-    def print_err(self):
-        acc=accuracy_score(self.y_true,self.y_pred)
-        f1=f1_score(self.y_true,self.y_pred)
-        print(f"Mean absolute error:{acc:.4f}")
-        print(f"Mean squared error {f1:.4f}")
 
 def regression( df_path,
                 result_path,
@@ -236,5 +268,5 @@ def to_array(df):
 regression( "desc/ineq",
             ["AutoML/output",
              "uci/output"],
-           "logistic",None)
+           "tree",None)
 #           "gauss_reg")

@@ -150,9 +150,9 @@ def plot_xy(x_path,y_path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--conf", type=str,default="matrix/conf.json")
-    parser.add_argument("--order", type=str,default="gini")
-    parser.add_argument("--out", type=str,default="desc/full2")
-    features_list=[Basic(),IR(),GINI(),PcaFeats(),Corel(),Shapley()]
+    parser.add_argument("--order", type=str,default="IR")
+    parser.add_argument("--out", type=str,default="desc/ineq")
+    features_list=[Basic(),IR(),GINI()]#,PcaFeats(),Corel(),Shapley()]
     args=parser.parse_args()
     make_desc( args.conf,
                features_list=features_list,
