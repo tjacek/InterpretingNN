@@ -41,7 +41,7 @@ class Basic(Feature):
 
     def __call__(self,arg_dict):
         data=arg_dict["data"]
-        data_params=data.params()
+        data_params=data.params
         return data_params.to_list()
 
 class PcaFeats(Feature):
@@ -65,7 +65,7 @@ class IR(Feature):
 
     def __call__(self,arg_dict):
         data=arg_dict["data"]
-        data_params=data.params()
+        data_params=data.params
         sizes=data_params.sizes()
         return max(sizes)/min(sizes)
 
@@ -102,6 +102,25 @@ class Corel(Feature):
         if(np.isnan(r)):
             r=0.0
         return r
+
+class Mixed(Feature):
+    def __str__(self):
+        return "mixed"
+
+    def __call__(self,arg_dict):
+        data=arg_dict["data"]
+        ablat=arg_dict["ablat"]
+
+        params=data.params
+        if(params.cats<3):
+            return 0.0
+        min_index=params.min_cls()
+        min_size=params.sizes_dict[min_index]
+        abla_i= ablat[:,min_index]
+        print(arg_dict["id"])
+        prop=  params.avrage_size()/min_size
+        value = utils.gini(np.abs(abla_i))
+        return value*prop
 
 def make_desc( conf_path,
                features_list=None,
@@ -150,9 +169,9 @@ def plot_xy(x_path,y_path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--conf", type=str,default="matrix/conf.json")
-    parser.add_argument("--order", type=str,default="IR")
-    parser.add_argument("--out", type=str,default="desc/ineq")
-    features_list=[Basic(),IR(),GINI()]#,PcaFeats(),Corel(),Shapley()]
+    parser.add_argument("--order", type=str,default="mixed")
+    parser.add_argument("--out", type=str,default=None) #"desc/ineq")
+    features_list=[Basic(),IR(),Mixed()]#GINI()]#,PcaFeats(),Corel(),Shapley()]
     args=parser.parse_args()
     make_desc( args.conf,
                features_list=features_list,
