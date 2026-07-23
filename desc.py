@@ -60,6 +60,9 @@ class PcaFeats(Feature):
         return [greatest,thres_var]
 
 class IR(Feature):
+    def __init__( self,log=False):
+        self.log=log
+
     def __str__(self):
         return "IR"
 
@@ -67,7 +70,10 @@ class IR(Feature):
         data=arg_dict["data"]
         data_params=data.params
         sizes=data_params.sizes()
-        return max(sizes)/min(sizes)
+        ir= max(sizes)/min(sizes)
+        if(self.log):
+            return np.log(ir)
+        return ir
 
 class GINI(Feature):
     def __str__(self):
@@ -104,8 +110,11 @@ class Corel(Feature):
         return r
 
 class Infl(Feature):
-    def __init__(self,infl_type="ablat"):
+    def __init__( self,
+                  infl_type="ablat",
+                  scale=True):
         self.infl_type=infl_type
+        self.scale=scale
     
     def __str__(self):
         return f"Infl({self.infl_type})"
@@ -115,15 +124,37 @@ class Infl(Feature):
         infl=arg_dict[self.infl_type]
 
         params=data.params
-#        if(params.cats<3):
-#            return 0.0
+        if(params.cats<3):
+            return 0.0
         min_index=params.min_cls()
         min_size=params.sizes_dict[min_index]
-        infl_i= infl[:,min_index]
-        print(arg_dict["id"])
-        prop=  params.avrage_size()/min_size
+        infl_i= infl[min_index,:]
         value = utils.gini(np.abs(infl_i))
-        return value*prop
+        if(self.scale):
+            prop=  params.avrage_size()/min_size
+            return value*prop
+        return value
+
+class CorlSize(Feature):
+    def __str__(self):
+        return f"CorlSize"
+
+    def __call__(self,arg_dict):
+        data=arg_dict["data"]
+        infl=arg_dict["ablat"]
+        params=data.params
+        if(params.cats==2):
+            return 0
+        x= [ params.sizes_dict[i]/params.samples 
+                  for i in range(params.cats)]
+        y=[utils.ineq(np.abs(x_i),"L") for x_i in infl]
+
+        print(y)
+        r,p=plot.plot_xy( x,y,
+                   title=arg_dict["id"], 
+                   x_label="size",
+                   y_label="gini")
+        return np.amax(x)
 
 def make_desc( conf_path,
                features_list=None,
@@ -169,14 +200,23 @@ def plot_xy(x_path,y_path):
                       x_label=x_path,
                       y_label=y_path)
 
+def transpose(in_path,out_path):
+    utils.make_dir(out_path)
+    mat_dict=plot.get_matrix_dict(in_path)
+    for name_i,mat_i in mat_dict.items():
+        np.savetxt(f'{out_path}/{name_i}', mat_i.T, fmt='%f')
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--conf", type=str,default="matrix/conf.json")
     parser.add_argument("--order", type=str,default="Infl(shapley)")
-    parser.add_argument("--out", type=str,default= "desc/mix3")
-    features_list=[Basic(),Infl("ablat"),Infl("shapley")]#GINI()]#,PcaFeats(),Corel(),Shapley()]
+    parser.add_argument("--out", type=str,default="desc/infl1")
+    features_list=[Basic(),Infl("ablat"),Infl("shapley")]#,IR(True)]
+    #GINI()]#,PcaFeats(),Corel(),Shapley()]
+#    features_list=[Basic(),CorlSize()]
     args=parser.parse_args()
     make_desc( args.conf,
                features_list=features_list,
                order_by=args.order,
                out_path=args.out)
+#    transpose("matrix/shapley","matrix/shapley_")
