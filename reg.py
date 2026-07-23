@@ -71,6 +71,14 @@ class ClfAlg(LearningAlg):
         f1=f1_score(self.y_true,self.y_pred)
         print(f"Accuracy:{acc:.4f}")
         print(f"F1-score {f1:.4f}")
+    
+    def error_dict(self):
+        pairs= zip(self.y_true,self.y_pred)
+        cat_dict={i:[]  for i in list(set(self.y_true))}
+        for i,(true_i,pred_i) in enumerate(pairs):
+            if(true_i!=pred_i):
+                cat_dict[true_i].append(self.names[i])
+        return cat_dict
 
 def leve_one_out(df,norm=True):
     df = df.reset_index(drop=True)
@@ -180,7 +188,7 @@ class TreeAlg(ClfAlg):
         return pred
 
     def show(self,df):
-        print(df)
+        print(self.error_dict())
         plt.figure(figsize=(20, 10))
         plot_tree(
                   self.reg,
@@ -205,24 +213,19 @@ class LogisticAlg(ClfAlg):
         return mean_i[0]
 
     def show(self,df):
-        print_coeff(self.coef,get_cols(df))
-        pairs= zip(self.y_true,self.y_pred)
-        cat_dict={i:[]  for i in list(set(self.y_true))}
-        for i,(true_i,pred_i) in enumerate(pairs):
-            if(true_i!=pred_i):
-                cat_dict[true_i].append(self.names[i])
-        print(cat_dict)
+        print_coeff(self.coef,get_cols(df))        
+        print(self.error_dict())
 
 def regression( df_path,
                 result_path,
                 alg_type="gauss",
                 out_path=None):
+    reg_alg=get_reg_alg(alg_type)
     df=get_input_data(df_path,
                       result_path,
                       x_clf="RF",
                       y_clf="TabPFN",
-                      discreet=True)
-    reg_alg=get_reg_alg(alg_type)
+                      discreet=isinstance(ClfAlg,reg_alg))
     output=reg_alg.make(df)
     output.print_err()
     img_iter=output.show(df)
@@ -268,5 +271,5 @@ def to_array(df):
 regression( "desc/ineq",
             ["AutoML/output",
              "uci/output"],
-           "tree",None)
+           "gauss",None)
 #           "gauss_reg")
