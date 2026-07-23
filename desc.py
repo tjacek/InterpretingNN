@@ -103,23 +103,26 @@ class Corel(Feature):
             r=0.0
         return r
 
-class Mixed(Feature):
+class Infl(Feature):
+    def __init__(self,infl_type="ablat"):
+        self.infl_type=infl_type
+    
     def __str__(self):
-        return "mixed"
+        return f"Infl({self.infl_type})"
 
     def __call__(self,arg_dict):
         data=arg_dict["data"]
-        ablat=arg_dict["ablat"]
+        infl=arg_dict[self.infl_type]
 
         params=data.params
-        if(params.cats<3):
-            return 0.0
+#        if(params.cats<3):
+#            return 0.0
         min_index=params.min_cls()
         min_size=params.sizes_dict[min_index]
-        abla_i= ablat[:,min_index]
+        infl_i= infl[:,min_index]
         print(arg_dict["id"])
         prop=  params.avrage_size()/min_size
-        value = utils.gini(np.abs(abla_i))
+        value = utils.gini(np.abs(infl_i))
         return value*prop
 
 def make_desc( conf_path,
@@ -169,9 +172,9 @@ def plot_xy(x_path,y_path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--conf", type=str,default="matrix/conf.json")
-    parser.add_argument("--order", type=str,default="mixed")
-    parser.add_argument("--out", type=str,default=None) #"desc/ineq")
-    features_list=[Basic(),IR(),Mixed()]#GINI()]#,PcaFeats(),Corel(),Shapley()]
+    parser.add_argument("--order", type=str,default="Infl(shapley)")
+    parser.add_argument("--out", type=str,default= "desc/mix3")
+    features_list=[Basic(),Infl("ablat"),Infl("shapley")]#GINI()]#,PcaFeats(),Corel(),Shapley()]
     args=parser.parse_args()
     make_desc( args.conf,
                features_list=features_list,
