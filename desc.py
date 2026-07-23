@@ -127,13 +127,39 @@ class Infl(Feature):
         if(params.cats<3):
             return 0.0
         min_index=params.min_cls()
-        min_size=params.sizes_dict[min_index]
         infl_i= infl[min_index,:]
+        print(arg_dict["id"])
+        print(infl_i)
         value = utils.gini(np.abs(infl_i))
         if(self.scale):
+            min_size=params.sizes_dict[min_index]
             prop=  params.avrage_size()/min_size
             return value*prop
         return value
+
+class FeatInfl(Feature):
+    def __init__( self,
+                  infl_type="ablat"):
+        self.infl_type=infl_type
+
+    def __str__(self):
+        return f"FeatInfl({self.infl_type})"   
+     
+    def __call__(self,arg_dict):
+        data=arg_dict["data"]
+        infl=arg_dict[self.infl_type]
+        if(data.params.cats==2):
+            return 0
+        min_index=data.params.min_cls()
+        cls_min=infl[min_index,:]
+        max_index=np.argmax(cls_min)
+        feat_max=infl[:,max_index]
+        print(feat_max.shape)
+        
+        min_size=data.params.sizes_dict[min_index]
+        prop=  np.log(data.params.samples)
+        prop/=min_size
+        return prop*utils.gini(np.abs(feat_max))
 
 class CorlSize(Feature):
     def __str__(self):
@@ -210,9 +236,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--conf", type=str,default="matrix/conf.json")
     parser.add_argument("--order", type=str,default="Infl(shapley)")
-    parser.add_argument("--out", type=str,default="desc/infl1")
-    features_list=[Basic(),Infl("ablat"),Infl("shapley")]#,IR(True)]
-    #GINI()]#,PcaFeats(),Corel(),Shapley()]
+    parser.add_argument("--out", type=str,default=None)#"desc/infl3")
+#    features_list=[Basic(),Infl("ablat"),Infl("shapley")]#,IR(True)]
+    features_list=[Basic(),#FeatInfl("ablat"),FeatInfl("shapley"),
+                    Infl("ablat"),Infl("shapley")]
 #    features_list=[Basic(),CorlSize()]
     args=parser.parse_args()
     make_desc( args.conf,

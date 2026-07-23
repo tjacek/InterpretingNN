@@ -77,3 +77,12 @@ def dir_fun(fun):
 def read_json(in_path):
     with open(in_path) as json_data:
         return json.load(json_data)
+
+def ineq(x,method="gini"):
+    if(method=="gini"):
+        return utils.gini(x)
+    if(method=="CV"):
+        return np.std(x)/np.mean(x)
+    if(method=="L"):
+        return np.amax(x)/np.sum(x)
+    return 0

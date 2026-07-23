@@ -225,7 +225,7 @@ def regression( df_path,
                       result_path,
                       x_clf="RF",
                       y_clf="TabPFN",
-                      discreet=isinstance(ClfAlg,reg_alg))
+                      discreet=issubclass(reg_alg,ClfAlg))
     output=reg_alg.make(df)
     output.print_err()
     img_iter=output.show(df)
@@ -268,7 +268,7 @@ def to_array(df):
     X=df.to_numpy()
     return X,y
 
-regression( "desc/ineq",
+regression( "desc/infl2",
             ["AutoML/output",
              "uci/output"],
            "gauss",None)
