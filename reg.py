@@ -1,6 +1,5 @@
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor,plot_tree,DecisionTreeClassifier
-#import sklearn.tree
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.linear_model import LogisticRegression
@@ -10,6 +9,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from dataclasses import dataclass,field#asdict
 import matplotlib.pyplot as plt
+import argparse
 import dataset,train,plot,utils
 
 @dataclass
@@ -100,9 +100,6 @@ def leve_one_out(df,norm=True):
             scaler = StandardScaler()
             train.X = scaler.fit_transform(train.X)
             test.X = scaler.transform(test.X)
-#            mean_y,std_y=np.mean(train.X),np.std(train.y)  
-#            train.y = (train.y-mean_y)/std_y
-#            test.y = (test.y-mean_y)/std_y
         yield train,test,data_i 
 
 def get_cols(df):
@@ -268,8 +265,32 @@ def to_array(df):
     X=df.to_numpy()
     return X,y
 
-regression( "desc/infl2",
-            ["AutoML/output",
-             "uci/output"],
-           "gauss",None)
-#           "gauss_reg")
+def plot_diff(df_path,
+              result_path,
+              x_clf="RF",
+              y_clf="TabPFN"):
+    df=pd.read_csv(df_path)
+    df_dict=train.show_pred(result_path,verbose=False)
+
+    x_dict=df_dict[x_clf]
+    y_dict=df_dict[y_clf]
+    plot.plot_txt( x_dict,
+                   y_dict,
+                   x_label=x_clf,
+                   y_label=y_clf)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--alg_type", type=str,default="logistic")
+    parser.add_argument("--desc", type=str,default="desc/infl2")
+    parser.add_argument("--plot", action="store_true")
+    args=parser.parse_args()
+    result_path= ["AutoML/output",
+                 "uci/output"]
+    if(args.plot):
+        plot_diff(args.desc,result_path)
+    else:
+        regression( args.desc,
+                result_path,
+                alg_type=args.alg_type,
+                out_path=None)

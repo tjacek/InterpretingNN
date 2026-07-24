@@ -5,20 +5,18 @@ from scipy.stats import pearsonr
 import argparse
 import train,utils
 
-def plot_txt( in_path,
-	         x_clf="MLP",
-	         y_clf="TabPFN"):
-    output_dict=train.show_pred(in_path,verbose=False)
-    x_dict=output_dict[x_clf]
-    y_dict=output_dict[y_clf]
+def plot_txt(x_dict,
+	         y_dict,
+             x_label,
+             y_label):
     fig=plt.figure()
     for data_i in x_dict:
         plt.text(x_dict[data_i], 
                  y_dict[data_i], 
                  data_i,
                  fontdict={'weight': 'bold', 'size': 9})
-    plt.xlabel(x_clf)
-    plt.ylabel(y_clf)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
     plt.xlim(0.9*min(x_dict.values()),
              1.1*max(x_dict.values()))
     plt.ylim(0.9*min(y_dict.values()),
@@ -45,6 +43,7 @@ def plot_xy( x,y,
             fontsize=11
     )
     plt.show()
+    return r,p
 
 def show_plots(img_iter,out_path=None):
     for i,out_i in enumerate(img_iter):
@@ -87,7 +86,8 @@ def error_hist( names,
 
 def prediction_hist(names,
                     y_true,
-                    y_pred):
+                    y_pred,
+                    title=None):
     x = np.arange(len(names))
     plt.figure(figsize=(12, 6))
 
@@ -110,7 +110,8 @@ def prediction_hist(names,
     plt.xticks(x, names, rotation=90)
     plt.xlabel("Sample")
     plt.ylabel("Target")
-#    plt.title("Regression - Leave-One-Out")
+    if(title):
+        plt.title(title)
     plt.grid(alpha=0.7)
     plt.legend()
     plt.tight_layout()
@@ -178,6 +179,6 @@ if __name__ == '__main__':
                  transforms)
 #    parser.add_argument("--x", type=str,default="RF")
 #    parser.add_argument("--y", type=str,default="TabPFN")
-#    args=parser.parse_args()
+#    
 #    plot_xy(["AutoML/output","uci/output"],
 #    	    x_clf=args.x,y_clf=args.y)
