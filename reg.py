@@ -284,11 +284,16 @@ if __name__ == '__main__':
     parser.add_argument("--alg_type", type=str,default="logistic")
     parser.add_argument("--desc", type=str,default="desc/infl2")
     parser.add_argument("--plot", action="store_true")
+    parser.add_argument("--x", type=str,default="RF")
+    parser.add_argument("--y", type=str,default="TabPFN")
     args=parser.parse_args()
     result_path= ["AutoML/output",
                  "uci/output"]
     if(args.plot):
-        plot_diff(args.desc,result_path)
+        plot_diff( args.desc,
+                   result_path,
+                   x_clf=args.x,
+                   y_clf=args.y)
     else:
         regression( args.desc,
                 result_path,

@@ -177,8 +177,3 @@ if __name__ == '__main__':
     show_heatmap(args.input,
                  args.output,
                  transforms)
-#    parser.add_argument("--x", type=str,default="RF")
-#    parser.add_argument("--y", type=str,default="TabPFN")
-#    
-#    plot_xy(["AutoML/output","uci/output"],
-#    	    x_clf=args.x,y_clf=args.y)
