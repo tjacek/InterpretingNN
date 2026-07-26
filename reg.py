@@ -216,12 +216,14 @@ class LogisticAlg(ClfAlg):
 def regression( df_path,
                 result_path,
                 alg_type="gauss",
-                out_path=None):
+                out_path=None,
+                x_clf="RF",
+                y_clf="TabPFN"):
     reg_alg=get_reg_alg(alg_type)
     df=get_input_data(df_path,
                       result_path,
-                      x_clf="RF",
-                      y_clf="TabPFN",
+                      x_clf=x_clf,
+                      y_clf=y_clf,
                       discreet=issubclass(reg_alg,ClfAlg))
     output=reg_alg.make(df)
     output.print_err()
@@ -296,6 +298,8 @@ if __name__ == '__main__':
                    y_clf=args.y)
     else:
         regression( args.desc,
-                result_path,
-                alg_type=args.alg_type,
-                out_path=None)
+                    result_path,
+                    alg_type=args.alg_type,
+                    out_path=None,
+                    x_clf=args.x,
+                    y_clf=args.y)
