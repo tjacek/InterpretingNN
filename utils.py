@@ -36,6 +36,14 @@ def natural_keys(text):
 def atoi(text):
     return int(text) if text.isdigit() else text
 
+
+def out_iter(in_path,out_path):
+    make_dir(out_path)
+    for in_i in top_files(in_path):
+        id_i=in_i.split("/")[-1]
+        out_i=f"{out_path}/{id_i}"
+        yield in_i,out_i
+
 def dir_paths(in_path,out_path):
     make_dir(out_path)
     for path_i in top_files(in_path):
