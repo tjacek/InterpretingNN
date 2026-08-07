@@ -4,10 +4,10 @@ import keras
 from keras.layers import Concatenate,Dense,BatchNormalization
 from keras import Input, Model
 #from tabpfn import TabPFNClassifier
-import clf,dataset
+import clfs.core,dataset
 
 
-class MLP(clf.Clf):
+class MLP(clfs.core.Clf):
     NAME="MLP"
     def __init__( self,
                   hyper_params=None,
@@ -87,7 +87,7 @@ class MLP(clf.Clf):
         samples=np.array(samples).T
         return self.predict(samples)
 
-class TabPFN(clf.Clf):
+class TabPFN(clfs.core.Clf):
     NAME="TabPFN"
     def __init__( self):
         self.model=TabPFNClassifier()

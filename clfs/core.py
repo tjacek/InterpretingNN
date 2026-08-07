@@ -36,5 +36,3 @@ class SVM(Clf):
     NAME="SVM"
     def __init__(self):
         self.model=svm.SVC(kernel='rbf')
-
-TYPES=[RF,GRAD,LR,SVM]
