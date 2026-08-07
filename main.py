@@ -1,3 +1,4 @@
+import numpy as np
 import argparse
 import base,clfs,dataset,utils
 
@@ -64,6 +65,20 @@ def ablation( in_path,
             result_j,_=splits_i(data_j,clf)
             result_j.save(f"{dir_i.ablat}/{j}")
 
+def ablat_matrix( result_dir,
+	              clf_type="RF"):
+    for path_i in utils.top_files(result_dir):
+        dir_i=DirProxy(path_i,clf_type)
+        ablat_f1=[]
+        for path_i in utils.top_files(dir_i.ablat):
+            result_i=base.ResultGroup.read(path_i)
+            ablat_f1.append(result_i.f1)
+        ablat_f1=np.array(ablat_f1)
+        full_result=base.ResultGroup.read(dir_i.results)
+        full_f1=full_result.f1
+        print(ablat_f1-full_f1)
+
 #print(clfs.TYPES)
-train("selected/data",
-	        "selected/output")
+#train("selected/data",
+#	        "selected/output")
+ablat_matrix("selected/output")

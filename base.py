@@ -103,11 +103,16 @@ class Result(object):
         self.y_pred=y_pred
         self.y_true=y_true
 
-    def get_acc(self):
-        return accuracy_score(self.y_pred,self.y_true)
     
-    def get_f1(self):
-        return f1_score(self.y_pred,self.y_true)
+    def get_score(self,score_type="acc"):
+        score= dispatch_score(score_type)
+        return score(self.y_pred,self.y_true,average='micro')
+
+#    def get_acc(self):
+#        return accuracy_score(self.y_pred,self.y_true)
+    
+#    def get_f1(self):
+#        return f1_score(self.y_pred,self.y_true)
     
     def save(self,out_path):
         y_pair=np.array([self.y_pred,self.y_true])
@@ -126,15 +131,23 @@ class ResultGroup(object):
     def __init__(self,indiv_result):
         self.indiv_result=indiv_result
 
-    def get_acc(self):
-        acc=[ result_i.get_acc() 
+    def get_score(self,score_type="acc"):
+        score=[ result_i.get_score(score_type) 
                 for result_i in self.indiv_result]
-        return np.mean(acc)
+        return np.mean(score)
+
+    @property
+    def f1(self):
+        return self.get_score("f1")
+#    def get_acc(self):
+#        acc=[ result_i.get_acc() 
+#                for result_i in self.indiv_result]
+#        return np.mean(acc)
     
-    def get_f1(self):
-        f1=[ result_i.get_f1() 
-                for result_i in self.indiv_result]
-        return np.mean(f1)
+#    def get_f1(self):
+#        f1=[ result_i.get_f1() 
+#                for result_i in self.indiv_result]
+#        return np.mean(f1)
 
     def save(self,out_path):
         utils.make_dir(out_path)
@@ -147,7 +160,12 @@ class ResultGroup(object):
                   for path_i in utils.top_files(in_path)]
         return cls(results)
 
-
 def get_split_dict(in_path):
     return { id_i:SplitGroup.read(f"{path_i}/splits")
          for id_i,path_i in utils.iter_files(in_path)}
+
+def dispatch_score(score_type):
+    if(score_type=="acc"):
+        return accuracy_score
+    if(score_type=="f1"):
+        return f1_score
