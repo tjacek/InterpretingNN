@@ -106,13 +106,7 @@ class Result(object):
     
     def get_score(self,score_type="acc"):
         score= dispatch_score(score_type)
-        return score(self.y_pred,self.y_true,average='micro')
-
-#    def get_acc(self):
-#        return accuracy_score(self.y_pred,self.y_true)
-    
-#    def get_f1(self):
-#        return f1_score(self.y_pred,self.y_true)
+        return score(self.y_pred,self.y_true)#,average='micro')
     
     def save(self,out_path):
         y_pair=np.array([self.y_pred,self.y_true])
@@ -135,19 +129,13 @@ class ResultGroup(object):
         score=[ result_i.get_score(score_type) 
                 for result_i in self.indiv_result]
         return np.mean(score)
-
+    @property
+    def acc(self):
+        return self.get_score("acc")
+    
     @property
     def f1(self):
         return self.get_score("f1")
-#    def get_acc(self):
-#        acc=[ result_i.get_acc() 
-#                for result_i in self.indiv_result]
-#        return np.mean(acc)
-    
-#    def get_f1(self):
-#        f1=[ result_i.get_f1() 
-#                for result_i in self.indiv_result]
-#        return np.mean(f1)
 
     def save(self,out_path):
         utils.make_dir(out_path)
@@ -168,4 +156,4 @@ def dispatch_score(score_type):
     if(score_type=="acc"):
         return accuracy_score
     if(score_type=="f1"):
-        return f1_score
+        return lambda x,y:f1_score(x,y,average='micro')

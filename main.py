@@ -54,6 +54,15 @@ def train( in_path,
         result_i,_=splits_i(data_i,clf)
         result_i.save(f"{dir_i.results}")
 
+def show_pred(out_path,score_type="f1"):
+    taboo=set(["ablat","splits"])
+    for id_i,path_i in utils.iter_files(out_path):
+        for clf_j,path_j in utils.iter_files(path_i):
+            if(not clf_j in taboo):
+                result_j=base.ResultGroup.read(f"{path_j}/results")
+                score=result_j.get_score(score_type)
+                print(f"{id_i},{clf_j},{score:.4f}")
+
 def ablation( in_path,
 	          out_path,
 	          clf_type="RF"):
@@ -79,6 +88,10 @@ def ablat_matrix( result_dir,
         print(ablat_f1-full_f1)
 
 #print(clfs.TYPES)
-#train("selected/data",
-#	        "selected/output")
-ablat_matrix("selected/output")
+#train( "selected/data",
+#	   "selected/output",
+#       clf_type="TabPNF")
+
+show_pred("selected/output")
+#ablat_matrix("selected/output",
+#               clf_type="MLP")
