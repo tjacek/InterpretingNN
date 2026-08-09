@@ -5,25 +5,29 @@ import base,clfs,dataset,utils
 SPLITS_DIRNAME = "splits"
 
 class DirProxy(object):
-	def __init__(self,dir_path,clf):
-		self.path=f"{dir_path}/{clf}"
-		utils.make_dir(self.path)
-		self.files={}
+    def __init__(self,dir_path,clf):
+        self.path=f"{dir_path}/{clf}"
+        self.split_path=f"{dir_path}/{SPLITS_DIRNAME}"
+        utils.make_dir(self.path)
+        self.files={}
 
-	def _make(self,key):
-		if(not key in self.files):
-			path=f"{self.path}/{key}"
-			utils.make_dir(path)
-			self.files[key]=path
-		return self.files[key]
+    def _make(self,key):
+        if(not key in self.files):
+            path=f"{self.path}/{key}"
+            utils.make_dir(path)
+            self.files[key]=path
+        return self.files[key]
     
-	@property
-	def ablat(self):
-		return self._make("ablat")
+    @property
+    def ablat(self):
+        return self._make("ablat")
 
-	@property
-	def results(self):
-		return self._make("results")
+    @property
+    def results(self):
+        return self._make("results")
+
+    def get_splits(self):
+        return base.SplitGroup.read(self.split_path)
 
 def make_splits( in_path,
 	             out_path,
@@ -91,7 +95,7 @@ def ablat_matrix( result_dir,
 #train( "selected/data",
 #	   "selected/output",
 #       clf_type="TabPNF")
-
-show_pred("selected/output")
+if __name__ == '__main__':
+    show_pred("selected/output")
 #ablat_matrix("selected/output",
 #               clf_type="MLP")
