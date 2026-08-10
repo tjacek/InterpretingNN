@@ -3,7 +3,7 @@ import tensorflow as tf
 import keras
 from keras.layers import Concatenate,Dense,BatchNormalization
 from keras import Input, Model
-#from tabpfn import TabPFNClassifier
+from tabpfn import TabPFNClassifier
 import clfs.core,dataset
 
 
