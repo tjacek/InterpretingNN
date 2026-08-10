@@ -3,7 +3,7 @@ import shap
 import argparse,os.path
 import clfs
 import dataset
-import main
+import main,utils
 
 def compute_shapley(  data_path,
 	                  dir_path,
@@ -22,12 +22,6 @@ def compute_shapley(  data_path,
         values_i=shape_split(data,split_i,model_i)
         np.savez(out_i, values_i)
 
-
-#        all_shape.append(values_i)
-#    shap_arr=np.concatenate(all_shape,axis=0)
-#    shap_matrix=np.mean(shap_arr,axis=0)
-#    np.savetxt(out_path, shap_matrix, fmt='%f')
-
 def shape_split(data_i,split_i,model_i):
     train,test=data_i.divide(split_i)
 
@@ -37,13 +31,30 @@ def shape_split(data_i,split_i,model_i):
     shap_values = explainer(test.X,max_evals=620)
     return shap_values.values
 
+def show_shapley( dir_path,
+                  clf):
+    dir_proxy=main.DirProxy(dir_path,clf)
+    shapley_path=dir_proxy.dispatch("shapley")
+    all_shape=[]
+    for path_i in utils.top_files(shapley_path):
+        shape_i=np.load(path_i)["arr_0"]
+        all_shape.append(shape_i)
+    shap_arr=np.concatenate(all_shape,axis=0)
+    shap_matrix=np.mean(shap_arr,axis=0)
+    print(shap_matrix)
+#    np.savetxt(out_path, shap_matrix, fmt='%f')
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_path", type=str,default="selected/data/cleveland")
     parser.add_argument("--dir_path", type=str,default="selected/output/cleveland")
     parser.add_argument("--clf", type=str,default="TabPNF")
-
+    parser.add_argument("--cmd", type=str,default="show")
     args=parser.parse_args()
-    compute_shapley( args.data_path,
-	                 args.dir_path,
-	                 args.clf)
+    if(args.cmd=="compute"):
+         compute_shapley( args.data_path,
+	                      args.dir_path,
+	                      args.clf)
+    if(args.cmd=="show"):
+        show_shapley(  args.dir_path,
+                       args.clf)
