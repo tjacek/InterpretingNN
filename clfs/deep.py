@@ -3,9 +3,9 @@ import tensorflow as tf
 import keras
 from keras.layers import Concatenate,Dense,BatchNormalization
 from keras import Input, Model
+import shap
 from tabpfn import TabPFNClassifier
 import clfs.core,dataset
-
 
 class MLP(clfs.core.Clf):
     NAME="MLP"
@@ -86,6 +86,11 @@ class MLP(clfs.core.Clf):
                     for v_min,v_max in value_range]
         samples=np.array(samples).T
         return self.predict(samples)
+
+    def get_explainer(self,train_x):
+        kmeans_summary = shap.kmeans(train_x, 100)
+        background_data = kmeans_summary.data        
+        return shap.DeepExplainer(self.model, background_data)
 
 class TabPFN(clfs.core.Clf):
     NAME="TabPFN"

@@ -24,11 +24,9 @@ def compute_shapley(  data_path,
 
 def shape_split(data_i,split_i,model_i):
     train,test=data_i.divide(split_i)
-
-    explainer = shap.Explainer(model_i.proba_fun(), 
-         	                   train.X)#,
-#                                  algorithm="tree")
-    shap_values = explainer(test.X,max_evals=620)
+    print(model_i.NAME)
+    explainer=model_i.get_explainer(train.X)
+    shap_values = explainer(test.X)#,max_evals=620)
     return shap_values.values
 
 def show_shapley(dir_path):
@@ -51,7 +49,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_path", type=str,default="selected/data/cleveland")
     parser.add_argument("--dir_path", type=str,default="selected/output/cleveland")
-    parser.add_argument("--clf", type=str,default="TabPNF")
+    parser.add_argument("--clf", type=str,default="MLP")
     parser.add_argument("--cmd", type=str,default="show")
     args=parser.parse_args()
     if(args.cmd=="compute"):
