@@ -10,6 +10,7 @@ class DirProxy(object):
     SHAP="shapley"
     def __init__(self,dir_path,clf):
         self.path=f"{dir_path}/{clf}"
+        self.clf=clf
         self.split_path=f"{dir_path}/{SPLITS_DIRNAME}"
         utils.make_dir(self.path)
         self.files={}

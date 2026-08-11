@@ -3,7 +3,7 @@ import shap
 import argparse,os.path
 import clfs
 import dataset
-import main,utils
+import main,plot,utils
 
 def compute_shapley(  data_path,
 	                  dir_path,
@@ -35,11 +35,8 @@ def show_shapley(dir_path):
     for dir_i in main.DirProxy.all_clfs(dir_path):
         shap_path=dir_i.subpath(dir_i.SHAP)
         if(os.path.exists(shap_path)):
-             mat=get_matrix(shap_path)
-             print(mat.shape)
-#        dir_proxy=main.DirProxy(dir_path,clf)
-#        shapley_path=dir_proxy.dispatch("shapley")
-#        print(path_i)
+             matrix=get_matrix(shap_path)
+             plot.show_heatmap(matrix,dir_i.clf)
 
 def get_matrix(shap_path):
     all_shape=[]
