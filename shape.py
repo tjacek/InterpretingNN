@@ -9,17 +9,17 @@ def compute_shapley(  data_path,
 	                  dir_path,
 	                  clf="TabPNF"):
     dir_proxy=main.DirProxy(dir_path,clf)
-    splits=dir_proxy.get_splits()
     clf_type=clfs.TYPES[clf]
     data=dataset.read_csv(data_path)
-    results,models=splits(data,clf_type)
     shapley_path=dir_proxy.dispatch("shapley")
-    for i,(split_i,model_i) in enumerate(zip(splits.splits,models)):
+    splits=dir_proxy.get_splits()
+    for i,split_i in enumerate(splits.splits):
         out_i=f"{shapley_path}/{i}"
         print(out_i)
         if os.path.exists(out_i+".npz"):
             continue
-        values_i=shape_split(data,split_i,model_i)
+        clf_i,_=split_i.fit_clf(data,clf_type())
+        values_i=shape_split(data,split_i,clf_i)
         np.savez(out_i, values_i)
 
 def shape_split(data_i,split_i,model_i):
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     parser.add_argument("--data_path", type=str,default="selected/data/cleveland")
     parser.add_argument("--dir_path", type=str,default="selected/output/cleveland")
     parser.add_argument("--clf", type=str,default="MLP")
-    parser.add_argument("--cmd", type=str,default="show")
+    parser.add_argument("--cmd", type=str,default="compute")
     args=parser.parse_args()
     if(args.cmd=="compute"):
          compute_shapley( args.data_path,
