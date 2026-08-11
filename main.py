@@ -5,29 +5,45 @@ import base,clfs,dataset,utils
 SPLITS_DIRNAME = "splits"
 
 class DirProxy(object):
+    ABLAT="ablat"
+    RESULT="results"
+    SHAP="shapley"
     def __init__(self,dir_path,clf):
         self.path=f"{dir_path}/{clf}"
         self.split_path=f"{dir_path}/{SPLITS_DIRNAME}"
         utils.make_dir(self.path)
         self.files={}
+   
+    def subpath(self,key):
+        return f"{self.path}/{key}"
 
-    def _make(self,key):
+    def dispatch(self,key):
         if(not key in self.files):
-            path=f"{self.path}/{key}"
+            path=self.subpath(key) #f"{self.path}/{key}"
             utils.make_dir(path)
             self.files[key]=path
         return self.files[key]
     
     @property
     def ablat(self):
-        return self._make("ablat")
+        return self.dispatch(self.ABLAT)
 
     @property
     def results(self):
-        return self._make("results")
+        return self.dispatch(self.RESULT)
 
+    @property
+    def shapley(self):
+        return self.dispatch(self.SHAP)
+    
     def get_splits(self):
         return base.SplitGroup.read(self.split_path)
+    
+    @classmethod
+    def all_clfs(cls,dir_path):
+        return [  cls(dir_path,id_i)
+                  for id_i,path_i in utils.iter_files(dir_path)
+                      if(id_i!=SPLITS_DIRNAME)]
 
 def make_splits( in_path,
 	             out_path,

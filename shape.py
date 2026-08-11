@@ -31,18 +31,24 @@ def shape_split(data_i,split_i,model_i):
     shap_values = explainer(test.X,max_evals=620)
     return shap_values.values
 
-def show_shapley( dir_path,
-                  clf):
-    dir_proxy=main.DirProxy(dir_path,clf)
-    shapley_path=dir_proxy.dispatch("shapley")
+def show_shapley(dir_path):
+    for dir_i in main.DirProxy.all_clfs(dir_path):
+        shap_path=dir_i.subpath(dir_i.SHAP)
+        if(os.path.exists(shap_path)):
+             mat=get_matrix(shap_path)
+             print(mat.shape)
+#        dir_proxy=main.DirProxy(dir_path,clf)
+#        shapley_path=dir_proxy.dispatch("shapley")
+#        print(path_i)
+
+def get_matrix(shap_path):
     all_shape=[]
-    for path_i in utils.top_files(shapley_path):
+    for path_i in utils.top_files(shap_path):
         shape_i=np.load(path_i)["arr_0"]
         all_shape.append(shape_i)
     shap_arr=np.concatenate(all_shape,axis=0)
     shap_matrix=np.mean(shap_arr,axis=0)
-    print(shap_matrix)
-#    np.savetxt(out_path, shap_matrix, fmt='%f')
+    return shap_matrix
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -56,5 +62,4 @@ if __name__ == '__main__':
 	                      args.dir_path,
 	                      args.clf)
     if(args.cmd=="show"):
-        show_shapley(  args.dir_path,
-                       args.clf)
+        show_shapley(  args.dir_path)
