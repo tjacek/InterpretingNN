@@ -10,7 +10,7 @@ from sklearn.preprocessing import StandardScaler
 from dataclasses import dataclass,field#asdict
 import matplotlib.pyplot as plt
 import argparse
-import dataset,train,plot,utils
+import dataset,plot,main,utils
 
 @dataclass
 class LearningAlg:
@@ -247,7 +247,7 @@ def get_input_data(df_path,
                    y_clf="TabPFN",
                    discreet=False):
     df=pd.read_csv(df_path)
-    df_dict=train.show_pred(result_path,verbose=False)
+    df_dict=main.PredDict.from_dir(result_path)
     x_dict=df_dict[x_clf]
     y_dict=df_dict[y_clf]
     def helper(row):
@@ -260,19 +260,12 @@ def get_input_data(df_path,
     print(df)
     return df
 
-def to_array(df):
-    df=df.drop("data",axis=1)
-    y=df["target"].to_numpy()
-    df=df.drop("target",axis=1)
-    X=df.to_numpy()
-    return X,y
-
 def plot_diff(df_path,
               result_path,
               x_clf="RF",
               y_clf="TabPFN"):
     df=pd.read_csv(df_path)
-    df_dict=train.show_pred(result_path,verbose=False)
+    df_dict=main.PredDict.from_dir(result_path)#,verbose=False)
 
     x_dict=df_dict[x_clf]
     y_dict=df_dict[y_clf]

@@ -73,7 +73,7 @@ class PredDict(dict):
     def from_df(cls,df):
         clf_dfs={}
         for data_i in df["data"].unique():
-            df_i=df[df["data"]==data_i]
+            df_i = df[df["data"] == data_i].copy()             
             acc_i=df_i["acc"].to_list()
             min_i=min(acc_i)
             delta_i= max(acc_i)-min_i
