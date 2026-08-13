@@ -13,7 +13,7 @@ def compute_shapley(  data_path,
     data=dataset.read_csv(data_path)
     shapley_path=dir_proxy.dispatch("shapley")
     splits=dir_proxy.get_splits()
-    for i,split_i in enumerate(splits.splits):
+    for i,split_i in enumerate(splits):
         out_i=f"{shapley_path}/{i}"
         print(out_i)
         if os.path.exists(out_i+".npz"):
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_path", type=str,default="selected/data/cleveland")
     parser.add_argument("--dir_path", type=str,default="selected/output/cleveland")
-    parser.add_argument("--clf", type=str,default="MLP")
+    parser.add_argument("--clf", type=str,default="TabPNF")
     parser.add_argument("--cmd", type=str,default="compute")
     args=parser.parse_args()
     if(args.cmd=="compute"):

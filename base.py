@@ -4,12 +4,7 @@ from sklearn.metrics import accuracy_score,f1_score
 from sklearn.model_selection import RepeatedStratifiedKFold
 import dataset,utils
 
-class SplitGroup(object):
-    def __init__(self,splits):
-        self.splits=splits
-
-    def __len__(self):
-        return len(self.splits)
+class SplitGroup(list):
 
     def __call__( self,
                   data,
@@ -17,9 +12,9 @@ class SplitGroup(object):
                   verbose=True):
         all_results,all_clfs=[],[]
         if(verbose):
-            split_iter=tqdm(self.splits)
+            split_iter=tqdm(self)
         else:
-            split_iter=self.splits
+            split_iter=self
         for split_i in split_iter:
             clf_i=clf_type()
             split_i.fit_clf(data,clf_i)
@@ -43,7 +38,7 @@ class SplitGroup(object):
     
     def save(self,out_path):
         utils.make_dir(out_path)
-        for i,split_i in enumerate(self.splits):
+        for i,split_i in enumerate(self):
             split_i.save(f"{out_path}/{i}")
     
     @classmethod
