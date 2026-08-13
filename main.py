@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import argparse
 import base,clfs,dataset,utils
 
@@ -20,7 +21,7 @@ class DirProxy(object):
 
     def dispatch(self,key):
         if(not key in self.files):
-            path=self.subpath(key) #f"{self.path}/{key}"
+            path=self.subpath(key)
             utils.make_dir(path)
             self.files[key]=path
         return self.files[key]
@@ -45,6 +46,41 @@ class DirProxy(object):
         return [  cls(dir_path,id_i)
                   for id_i,path_i in utils.iter_files(dir_path)
                       if(id_i!=SPLITS_DIRNAME)]
+
+class PredDict(dict):
+    def __getitem__(self,clf):
+        clf_dict={}
+        for name_i,df_i in self.items():
+            acc = df_i.set_index("clf")["norm_acc"]
+            clf_dict[name_i]=acc[clf]
+        return clf_dict
+
+    def issubset(self, names):
+        return set(names).issubset(self.df_dict.keys())
+
+    @classmethod
+    def from_dir(cls,in_path):
+        reader=base.ResultGroup.read
+        lines=[]
+        for id_i,clf_j,path_j in clf_dir_iter(in_path):
+            result_j=reader(f"{path_j}/results")
+            lines.append((id_i,clf_j,result_j.acc))
+        df=pd.DataFrame.from_records(lines,
+                                     columns=["data","clf","acc"])
+        return cls.from_df(df)
+
+    @classmethod
+    def from_df(cls,df):
+        clf_dfs={}
+        for data_i in df["data"].unique():
+            df_i=df[df["data"]==data_i]
+            acc_i=df_i["acc"].to_list()
+            min_i=min(acc_i)
+            delta_i= max(acc_i)-min_i
+            df_i["norm_acc"]=df_i["acc"].apply(lambda acc: (acc-min_i)/delta_i)
+            df_i.sort_values(by="norm_acc",inplace=True)
+            clf_dfs[data_i]=df_i
+        return cls(clf_dfs)
 
 def make_splits( in_path,
 	             out_path,
@@ -76,13 +112,17 @@ def train( in_path,
         result_i.save(f"{dir_i.results}")
 
 def show_pred(out_path,score_type="f1"):
+    for id_i,clf_j,path_j in clf_dir_iter(out_path):
+        result_j=base.ResultGroup.read(f"{path_j}/results")
+        score=result_j.get_score(score_type)
+        print(f"{id_i},{clf_j},{score:.4f}")
+
+def clf_dir_iter(out_path):
     taboo=set(["ablat","splits"])
     for id_i,path_i in utils.iter_files(out_path):
         for clf_j,path_j in utils.iter_files(path_i):
             if(not clf_j in taboo):
-                result_j=base.ResultGroup.read(f"{path_j}/results")
-                score=result_j.get_score(score_type)
-                print(f"{id_i},{clf_j},{score:.4f}")
+                yield id_i,clf_j,path_j
 
 def ablation( in_path,
 	          out_path,
@@ -113,6 +153,6 @@ def ablat_matrix( result_dir,
 #	   "selected/output",
 #       clf_type="TabPNF")
 if __name__ == '__main__':
-    show_pred("selected/output")
+    PredDict.from_dir("uci/output")
 #ablat_matrix("selected/output",
 #               clf_type="MLP")
