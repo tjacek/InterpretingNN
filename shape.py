@@ -22,10 +22,20 @@ def compute_shapley(  data_path,
         values_i=shape_split(data,split_i,clf_i)
         np.savez(out_i, values_i)
 
-def shape_split(data_i,split_i,model_i):
+def shape_split( data_i,
+                 split_i,
+                 clf_i,
+                 k=100):
     train,test=data_i.divide(split_i)
     print(model_i.NAME)
-    explainer=model_i.get_explainer(train.X)
+#    explainer=model_i.get_explainer(train.X)
+    if(k is None):
+        background_data=train.X
+    else:
+        kmeans_summary = shap.kmeans(train.X, k)
+        background_data = kmeans_summary.data     
+    shap.Explainer( clf_i.model.predict_proba, 
+                    train.X)
     shap_values = explainer(test.X)#,max_evals=620)
     return shap_values.values
 
