@@ -1,11 +1,42 @@
 import numpy as np
 import shap
+from dataclasses import dataclass
 import argparse,os.path
 import clfs
 import dataset
 import main,plot,utils
 
-def compute_shapley(  data_path,
+@dataclass
+class ShapleyExp:
+    data_path:str      
+    split_path:str
+    clf_type:str
+    out_path:str 
+    k:int
+    
+    def get_data(self):
+        data=dataset.read_csv(self.data_path)
+        splits=base.SplitGroup.read(self.split_path)
+        return data,splits
+
+    def get_clf(self):
+        return clfs.TYPES[self.clf_type]
+
+def compute_shapley(shap_exp):
+    data,splits=shap_exp.get_data()
+    clf_type=shap_exp.get_clf()
+    for i,split_i in enumerate(splits):
+        out_i=f"{shapley_path}/{i}"
+        if os.path.exists(out_i+".npz"):
+            continue
+        clf_i,_=split_i.fit_clf(data,clf_type())
+        values_i=shape_split( data,
+                              split_i,
+                              clf_i
+                              k=shap_exp.k)
+        np.savez(out_i, values_i)
+
+def _compute_shapley(  data_path,
 	                  dir_path,
 	                  clf="TabPNF"):
     dir_proxy=main.DirProxy(dir_path,clf)
