@@ -22,10 +22,10 @@ class ShapleyExp:
     def get_clf(self):
         return clfs.TYPES[self.clf_type]
 
-    def iter_exp(self,atrr,values):
+    def iter_exp(self,attr,values):
         for value_i in values:
-            exp_i=self.copy()
-            value_i=setattr(self, attr, value_i)
+            exp_i = ShapleyExp(**self.__dict__)
+            value_i=setattr(exp_i, attr, value_i)
             yield exp_i
 
 def compute_shapley(shap_exp):
@@ -45,7 +45,7 @@ def compute_shapley(shap_exp):
         return shap_values.values
     utils.make_dir(shap_exp.out_path)
     for i,split_i in enumerate(splits):
-        out_i=f"{exp.out_path}/{i}"
+        out_i=f"{shap_exp.out_path}/{i}"
         if os.path.exists(out_i+".npz"):
             continue
         clf_i,_=split_i.fit_clf(data,clf_type())
@@ -68,6 +68,14 @@ def get_matrix(shap_path):
     shap_matrix=np.mean(shap_arr,axis=0)
     return shap_matrix
 
+def k_exp(shap_exp):
+    values=[50,100,200]
+    k_iter=shap_exp.iter_exp("k",values)
+    for exp_i in k_iter:
+        exp_i.out_path+=f"{exp_i.k}"
+        print(exp_i.out_path)
+        compute_shapley(exp_i)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_path", type=str,default="selected/data/cleveland")
@@ -82,6 +90,7 @@ if __name__ == '__main__':
                         args.clf,
                         f"{args.dir_path}/{args.clf}/shapley",
                         k=None)
-        compute_shapley( exp)
+#        compute_shapley( exp)
+        k_exp(exp)
     if(args.cmd=="show"):
         show_shapley(  args.dir_path)
