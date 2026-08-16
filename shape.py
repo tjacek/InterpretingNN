@@ -76,6 +76,15 @@ def k_exp(shap_exp):
         print(exp_i.out_path)
         compute_shapley(exp_i)
 
+def var_matrix(in_path):
+    paths=utils.find_paths(in_path,regex=r'^shapley(.)+')
+    indiv_matrix=[ get_matrix(path_i) for path_i in paths]
+    indiv_matrix=np.array(indiv_matrix)
+    mean_matrix=np.mean(indiv_matrix,axis=0)
+    plot.show_heatmap(mean_matrix,"mean")
+    std_matrix=np.std(indiv_matrix,axis=0)
+    plot.show_heatmap(std_matrix,"std")
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_path", type=str,default="selected/data/cleveland")
@@ -83,6 +92,8 @@ if __name__ == '__main__':
     parser.add_argument("--clf", type=str,default="RF")
     parser.add_argument("--cmd", type=str,default="compute")
     args=parser.parse_args()
+#    var_matrix(f"{args.dir_path}/RF")
+#    raise Exception("OK")
     if(args.cmd=="compute"):
         utils.make_dir(f"{args.dir_path}/{args.clf}")
         exp=ShapleyExp( args.data_path,      
