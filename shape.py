@@ -54,13 +54,15 @@ def compute_shapley(shap_exp):
         values_i=helper(split_i,clf_i)
         np.savez(out_i, values_i)
 
-def show_shapley(dir_path):
-#    utils,
-    for dir_i in main.DirProxy.all_clfs(dir_path):
-        shap_path=dir_i.subpath(dir_i.SHAP)
-        if(os.path.exists(shap_path)):
-             matrix=get_matrix(shap_path)
-             plot.show_heatmap(matrix,dir_i.clf)
+def show_shapley( in_path,
+                  regex=r'^shapley(.)+'):
+    conf_dict=utils.read_json(in_path)
+    paths=utils.find_paths( conf_dict["out_path"],
+                            regex=regex)
+    for path_i in paths:
+        if(os.path.exists(path_i)):
+             matrix=get_matrix(path_i)
+             plot.show_heatmap(matrix,path_i.split("/")[-1])
 
 def get_matrix(shap_path):
     all_shape=[]
@@ -84,7 +86,6 @@ def var_matrix( in_path,
     conf_dict=utils.read_json(in_path)
     paths=utils.find_paths( conf_dict["out_path"],
                             regex=regex)
-#    raise Exception(paths)
     indiv_matrix=[ get_matrix(path_i) for path_i in paths]
     indiv_matrix=np.array(indiv_matrix)
     mean_matrix=np.mean(indiv_matrix,axis=0)
@@ -110,21 +111,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--conf_path",type=str,default="selected/conf.json") 
     parser.add_argument("--regex", type=str,default=r"MLP_(.)+")
-    parser.add_argument("--cmd", type=str,default="var")
+    parser.add_argument("--cmd", type=str,default="show")
     args=parser.parse_args()
     if(args.cmd=="compute"):
         inf_exp(args.conf_path)
-#    if(args.cmd=="show"):
-#        show_shapley(  args.dir_path)
+    if(args.cmd=="show"):
+        show_shapley(  args.conf_path,
+                       regex=args.regex)
     if(args.cmd=="var"):
         var_matrix( args.conf_path,
                     regex=args.regex)
-#    if(args.cmd=="compute"):
-#        utils.make_dir(f"{args.dir_path}/{args.clf}")
-#        exp=ShapleyExp( args.data_path,      
-#                        f"{args.dir_path}/splits",
-#                        args.clf,
-#                        f"{args.dir_path}/{args.clf}/shapley",
-#                        k=None)
-#        k_exp(exp)
-    
