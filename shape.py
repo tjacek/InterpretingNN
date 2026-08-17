@@ -1,5 +1,6 @@
 import numpy as np
 import shap
+from tqdm import tqdm
 from dataclasses import dataclass,field
 import argparse,os.path
 import clfs
@@ -43,8 +44,9 @@ def compute_shapley(shap_exp):
                         train.X)
         shap_values = explainer(test.X)#,max_evals=620)
         return shap_values.values
+    print(shap_exp.out_path)
     utils.make_dir(shap_exp.out_path)
-    for i,split_i in enumerate(splits):
+    for i,split_i in enumerate(tqdm(splits)):
         out_i=f"{shap_exp.out_path}/{i}"
         if os.path.exists(out_i+".npz"):
             continue
@@ -88,10 +90,15 @@ def var_matrix(in_path):
 def inf_exp(in_path):
     conf_dict=utils.read_json(in_path)
     prototype=ShapleyExp(conf_dict["data_path"],
-                         conf_dict["split_path"])
+                         conf_dict["split_path"],
+                         conf_dict["out_path"])
     clf_iter=prototype.iter_exp("clf_type",conf_dict["clf"])
     for exp_i in clf_iter:
-        print(exp_i)
+        k_iter=exp_i.iter_exp( "k",
+                               conf_dict["k"])
+        for exp_j in k_iter:
+            exp_j.out_path+=f"{exp_j.clf_type}_{exp_j.k}"
+            compute_shapley(exp_j)
 
 
 if __name__ == '__main__':
