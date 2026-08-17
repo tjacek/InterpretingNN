@@ -1,6 +1,6 @@
 import numpy as np
 import shap
-from dataclasses import dataclass
+from dataclasses import dataclass,field
 import argparse,os.path
 import clfs
 import dataset
@@ -10,9 +10,9 @@ import base,main,plot,utils
 class ShapleyExp:
     data_path:str      
     split_path:str
-    clf_type:str
-    out_path:str 
-    k:int
+    out_path:str = field(default=None)
+    clf_type:str = field(default='RF')
+    k:int = field(default=100)
     
     def get_data(self):
         data=dataset.read_csv(self.data_path)
@@ -25,7 +25,7 @@ class ShapleyExp:
     def iter_exp(self,attr,values):
         for value_i in values:
             exp_i = ShapleyExp(**self.__dict__)
-            value_i=setattr(exp_i, attr, value_i)
+            setattr(exp_i, attr, value_i)
             yield exp_i
 
 def compute_shapley(shap_exp):
@@ -85,23 +85,31 @@ def var_matrix(in_path):
     std_matrix=np.std(indiv_matrix,axis=0)
     plot.show_heatmap(std_matrix,"std")
 
+def inf_exp(in_path):
+    conf_dict=utils.read_json(in_path)
+    prototype=ShapleyExp(conf_dict["data_path"],
+                         conf_dict["split_path"])
+    clf_iter=prototype.iter_exp("clf_type",conf_dict["clf"])
+    for exp_i in clf_iter:
+        print(exp_i)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_path", type=str,default="selected/data/cleveland")
-    parser.add_argument("--dir_path", type=str,default="selected/output/cleveland")
-    parser.add_argument("--clf", type=str,default="RF")
-    parser.add_argument("--cmd", type=str,default="compute")
+    parser.add_argument("--conf_path",type=str,default="selected/conf.json") 
+#    parser.add_argument("--data_path", type=str,default="selected/data/cleveland")
+#    parser.add_argument("--dir_path", type=str,default="selected/output/cleveland")
+#    parser.add_argument("--clf", type=str,default="RF")
+#    parser.add_argument("--cmd", type=str,default="compute")
     args=parser.parse_args()
-#    var_matrix(f"{args.dir_path}/RF")
-#    raise Exception("OK")
-    if(args.cmd=="compute"):
-        utils.make_dir(f"{args.dir_path}/{args.clf}")
-        exp=ShapleyExp( args.data_path,      
-                        f"{args.dir_path}/splits",
-                        args.clf,
-                        f"{args.dir_path}/{args.clf}/shapley",
-                        k=None)
-#        compute_shapley( exp)
-        k_exp(exp)
-    if(args.cmd=="show"):
-        show_shapley(  args.dir_path)
+    inf_exp(args.conf_path)
+#    if(args.cmd=="compute"):
+#        utils.make_dir(f"{args.dir_path}/{args.clf}")
+#        exp=ShapleyExp( args.data_path,      
+#                        f"{args.dir_path}/splits",
+#                        args.clf,
+#                        f"{args.dir_path}/{args.clf}/shapley",
+#                        k=None)
+#        k_exp(exp)
+#    if(args.cmd=="show"):
+#        show_shapley(  args.dir_path)
