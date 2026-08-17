@@ -40,8 +40,8 @@ def compute_shapley(shap_exp):
             kmeans_summary = shap.kmeans( train.X, 
                                           shap_exp.k)
             background_data = kmeans_summary.data     
-        explainer=shap.Explainer( clf_i.model.predict_proba, 
-                        train.X)
+        explainer=shap.Explainer( clf_i.proba_fun(),#model.predict_proba, 
+                                  train.X)
         shap_values = explainer(test.X)#,max_evals=620)
         return shap_values.values
     print(shap_exp.out_path)
@@ -55,6 +55,7 @@ def compute_shapley(shap_exp):
         np.savez(out_i, values_i)
 
 def show_shapley(dir_path):
+#    utils,
     for dir_i in main.DirProxy.all_clfs(dir_path):
         shap_path=dir_i.subpath(dir_i.SHAP)
         if(os.path.exists(shap_path)):
@@ -78,8 +79,12 @@ def k_exp(shap_exp):
         print(exp_i.out_path)
         compute_shapley(exp_i)
 
-def var_matrix(in_path):
-    paths=utils.find_paths(in_path,regex=r'^shapley(.)+')
+def var_matrix( in_path,
+                regex=r'^shapley(.)+'):
+    conf_dict=utils.read_json(in_path)
+    paths=utils.find_paths( conf_dict["out_path"],
+                            regex=regex)
+#    raise Exception(paths)
     indiv_matrix=[ get_matrix(path_i) for path_i in paths]
     indiv_matrix=np.array(indiv_matrix)
     mean_matrix=np.mean(indiv_matrix,axis=0)
@@ -104,12 +109,16 @@ def inf_exp(in_path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--conf_path",type=str,default="selected/conf.json") 
-#    parser.add_argument("--data_path", type=str,default="selected/data/cleveland")
-#    parser.add_argument("--dir_path", type=str,default="selected/output/cleveland")
-#    parser.add_argument("--clf", type=str,default="RF")
-#    parser.add_argument("--cmd", type=str,default="compute")
+    parser.add_argument("--regex", type=str,default=r"MLP_(.)+")
+    parser.add_argument("--cmd", type=str,default="var")
     args=parser.parse_args()
-    inf_exp(args.conf_path)
+    if(args.cmd=="compute"):
+        inf_exp(args.conf_path)
+#    if(args.cmd=="show"):
+#        show_shapley(  args.dir_path)
+    if(args.cmd=="var"):
+        var_matrix( args.conf_path,
+                    regex=args.regex)
 #    if(args.cmd=="compute"):
 #        utils.make_dir(f"{args.dir_path}/{args.clf}")
 #        exp=ShapleyExp( args.data_path,      
@@ -118,5 +127,4 @@ if __name__ == '__main__':
 #                        f"{args.dir_path}/{args.clf}/shapley",
 #                        k=None)
 #        k_exp(exp)
-#    if(args.cmd=="show"):
-#        show_shapley(  args.dir_path)
+    

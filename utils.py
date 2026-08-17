@@ -36,6 +36,12 @@ def natural_keys(text):
 def atoi(text):
     return int(text) if text.isdigit() else text
 
+def find_paths(in_path,regex=r'^layer_\d+'):
+    paths= [path_i 
+                for id_i,path_i in iter_files(in_path)
+                    if( re.match(regex,id_i))]
+    paths=sorted(paths,key=natural_keys)
+    return paths
 
 def out_iter(in_path,out_path):
     make_dir(out_path)
@@ -49,6 +55,7 @@ def dir_paths(in_path,out_path):
     for path_i in top_files(in_path):
         id_i=path_i.split("/")[-1]
         yield path_i,f"{out_path}/{id_i}"
+
 
 def gini(arr):
     arr = np.sort(np.asarray(arr))
