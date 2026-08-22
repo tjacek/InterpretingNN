@@ -1,33 +1,9 @@
 import numpy as np
 import shap
 from tqdm import tqdm
-from dataclasses import dataclass,field
 import argparse,os.path
-import clfs
-import dataset
+import exp
 import base,main,plot,utils
-
-@dataclass
-class ShapleyExp:
-    data_path:str      
-    split_path:str
-    out_path:str = field(default=None)
-    clf_type:str = field(default='RF')
-    k:int = field(default=100)
-    
-    def get_data(self):
-        data=dataset.read_csv(self.data_path)
-        splits=base.SplitGroup.read(self.split_path)
-        return data,splits
-
-    def get_clf(self):
-        return clfs.TYPES[self.clf_type]
-
-    def iter_exp(self,attr,values):
-        for value_i in values:
-            exp_i = ShapleyExp(**self.__dict__)
-            setattr(exp_i, attr, value_i)
-            yield exp_i
 
 def compute_shapley(shap_exp):
     data,splits=shap_exp.get_data()
@@ -40,7 +16,7 @@ def compute_shapley(shap_exp):
             kmeans_summary = shap.kmeans( train.X, 
                                           shap_exp.k)
             background_data = kmeans_summary.data     
-        explainer=shap.Explainer( clf_i.proba_fun(),#model.predict_proba, 
+        explainer=shap.Explainer( clf_i.proba_fun(),
                                   train.X)
         shap_values = explainer(test.X)#,max_evals=620)
         return shap_values.values
@@ -93,28 +69,27 @@ def var_matrix( in_path,
     std_matrix=np.std(indiv_matrix,axis=0)
     plot.show_heatmap(std_matrix,"std")
 
-def inf_exp(in_path):
-    conf_dict=utils.read_json(in_path)
-    prototype=ShapleyExp(conf_dict["data_path"],
-                         conf_dict["split_path"],
-                         conf_dict["out_path"])
-    clf_iter=prototype.iter_exp("clf_type",conf_dict["clf"])
+def shapley_exp(in_path):
+    conf=utils.read_json(in_path)
+    prototype=exp.ExpParams( conf["data_path"],
+                             conf["split_path"],
+                             conf["out_path"])
+    clf_iter=prototype.iter_exp("clf_type",conf["clf"])
+    utils.make_dir(prototype.out_path)
     for exp_i in clf_iter:
-        k_iter=exp_i.iter_exp( "k",
-                               conf_dict["k"])
+        k_iter=exp_i.iter_exp( "k",conf["k"])
         for exp_j in k_iter:
             exp_j.out_path+=f"{exp_j.clf_type}_{exp_j.k}"
             compute_shapley(exp_j)
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--conf_path",type=str,default="selected/conf.json") 
     parser.add_argument("--regex", type=str,default=r"MLP_(.)+")
-    parser.add_argument("--cmd", type=str,default="show")
+    parser.add_argument("--cmd", type=str,default="compute")
     args=parser.parse_args()
     if(args.cmd=="compute"):
-        inf_exp(args.conf_path)
+        shapley_exp(args.conf_path)
     if(args.cmd=="show"):
         show_shapley(  args.conf_path,
                        regex=args.regex)
