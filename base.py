@@ -98,7 +98,6 @@ class Result(object):
         self.y_pred=y_pred
         self.y_true=y_true
 
-    
     def get_score(self,score_type="acc"):
         score= dispatch_score(score_type)
         return score(self.y_pred,self.y_true)#,average='micro')
@@ -115,15 +114,34 @@ class Result(object):
         y_pred,y_true=raw[0],raw[1]
         return cls( y_pred=y_pred,
                     y_true=y_true)
-    
+
+    def cat_score(self,i,score_type):
+        indices=(self.y_pred==i)
+        pred_i=self.y_pred[indices]
+        true_i=self.y_true[indices]
+        score= dispatch_score(score_type)
+        return score(pred_i,true_i)
+
 class ResultGroup(object):
     def __init__(self,indiv_result):
         self.indiv_result=indiv_result
+    
+    @classmethod
+    def read(cls,in_path:str):
+        results=[ Result.read(path_i)
+                  for path_i in utils.top_files(in_path)]
+        return cls(results)
+    
+    def n_cats(self):
+        ind_n=[  max(ind_i.y_true)
+                 for ind_i in self.indiv_result]
+        return int(max(ind_n))+1
 
     def get_score(self,score_type="acc"):
         score=[ result_i.get_score(score_type) 
                 for result_i in self.indiv_result]
         return np.mean(score)
+
     @property
     def acc(self):
         return self.get_score("acc")
@@ -137,11 +155,12 @@ class ResultGroup(object):
         for i,result_i in enumerate(self.indiv_result):
             result_i.save(f"{out_path}/{i}")
     
-    @classmethod
-    def read(cls,in_path:str):
-        results=[ Result.read(path_i)
-                  for path_i in utils.top_files(in_path)]
-        return cls(results)
+    def cat_score(self,i,score):
+        score=[ result_i.cat_score(i,score) 
+                for result_i in self.indiv_result]
+        return np.mean(score)
+
+
 
 def get_split_dict(in_path):
     return { id_i:SplitGroup.read(f"{path_i}/splits")
