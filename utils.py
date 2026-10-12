@@ -43,6 +43,25 @@ def find_paths(in_path,regex=r'^layer_\d+'):
     paths=sorted(paths,key=natural_keys)
     return paths
 
+class SmartDict(dict):
+
+    def remove(self,taboo):
+        if(not taboo):
+            return self
+        new_dict={ key_i:value_i
+                    for key_i,value_i in self.items()
+                        if(not key_i in taboo)}
+        return SmartDict(new_dict)
+
+    def select(self,subset):
+        if(not subset):
+            return self
+        new_dict={ key_i:value_i
+                    for key_i,value_i in self.items()
+                        if(key_i in subset)}
+        return SmartDict(new_dict)
+
+
 def out_iter(in_path,out_path):
     make_dir(out_path)
     for in_i in top_files(in_path):
