@@ -48,18 +48,25 @@ class SmartDict(dict):
     def remove(self,taboo):
         if(not taboo):
             return self
+
         new_dict={ key_i:value_i
                     for key_i,value_i in self.items()
                         if(not key_i in taboo)}
         return SmartDict(new_dict)
 
-    def select(self,subset):
-        if(not subset):
+    def select(self,pred):
+        if(not pred):
             return self
+        if(type(pred)==list):
+            pred=lambda key,value: key_i in pred
         new_dict={ key_i:value_i
                     for key_i,value_i in self.items()
-                        if(key_i in subset)}
+                        if(pred(key_i,value_i))}
         return SmartDict(new_dict)
+
+def read_json(in_path):
+    with open(in_path) as json_data:
+        return SmartDict(json.load(json_data))
 
 
 def out_iter(in_path,out_path):
@@ -108,9 +115,7 @@ def dir_fun(fun):
                 fun(path_i)
     return helper
 
-def read_json(in_path):
-    with open(in_path) as json_data:
-        return json.load(json_data)
+
 
 def ineq(x,method="gini"):
     if(method=="gini"):

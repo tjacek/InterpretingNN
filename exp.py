@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import base
-import clf
+import clfs
 import dataset
 import utils
 
@@ -22,7 +22,7 @@ class ExpParams:
         return data,splits
 
     def get_clf(self):
-        return clf.TYPES[self.clf_type]
+        return clfs.TYPES[self.clf_type]
 
     def iter_exp(self,attr,values):
         for value_i in values:
@@ -41,3 +41,7 @@ def from_dir( data_path,
                          clfs)
         exps.append(exp_i)
     return exps
+
+def from_conf( conf_dict):
+    mult_args=conf_dict.select(lambda k,v: type(v)==list)
+    print(mult_args)
