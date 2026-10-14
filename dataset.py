@@ -97,6 +97,10 @@ class DatasetParams:
     def sizes(self):
         return list(self.sizes_dict.values())
 
+    def IR(self):
+        sizes=self.sizes()
+        return max(sizes)/min(sizes)
+
 def read_csv(in_path:str):
     if(type(in_path)==tuple):
         X,y=in_path
@@ -133,15 +137,14 @@ def make_desc(in_path,verbose=True):
     def helper(args):
         id_i,path_i=args
         data_i=read_csv(path_i)
-        line_i=[ id_i,
-                 data_i.n_cats(),
-                 data_i.dim(),
-                 len(data_i),
-                 round(data_i.IR(),2)]
-        line_i+=data_i.pca_feats()
+        params_i=data_i.params()
+        params_i=list(params_i)
+        line_i=[id_i]
+        line_i=line_i+list(params_i)
+        line_i.append(params_i.IR())
         return line_i
     cols=["data","classes","feats","samples",
-          "IR","pca_max","pca_95"]
+          "IR"]
     df=make_df(helper,
                iterable=paths,
                cols=cols)
