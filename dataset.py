@@ -90,7 +90,10 @@ class DatasetParams:
     @classmethod
     def from_arr(self,X,y):
         return Dataset(X,y).params()
-
+    
+    def __iter__(self):
+        return iter(self.to_list())
+    
     def to_list(self):
         return [self.feats,self.samples,self.cats]
 
@@ -138,12 +141,11 @@ def make_desc(in_path,verbose=True):
         id_i,path_i=args
         data_i=read_csv(path_i)
         params_i=data_i.params()
-        params_i=list(params_i)
         line_i=[id_i]
         line_i=line_i+list(params_i)
         line_i.append(params_i.IR())
         return line_i
-    cols=["data","classes","feats","samples",
+    cols=["data","feats","feats","samples",
           "IR"]
     df=make_df(helper,
                iterable=paths,
@@ -153,4 +155,4 @@ def make_desc(in_path,verbose=True):
     return df
 
 if __name__ == '__main__':
-    make_desc("spatial")
+    make_desc("uci/s_data")

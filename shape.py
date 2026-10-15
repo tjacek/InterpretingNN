@@ -38,7 +38,9 @@ def make_shap(shap_exp):
 
 def compute_shapley(conf_path):
     conf=utils.read_json(conf_path)
-    exp.from_conf(conf)
+    exps=exp.from_conf(conf)
+    for exp_i in exps:
+        print(exp_i)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

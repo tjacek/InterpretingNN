@@ -43,5 +43,17 @@ def from_dir( data_path,
     return exps
 
 def from_conf( conf_dict):
-    mult_args=conf_dict.select(lambda k,v: type(v)==list)
-    print(mult_args)
+    multi,single=conf_dict.split(lambda k,v: type(v)==list)
+    exps=[ExpParams(**single)]
+    utils.make_dir(exps[0].out_path)
+    for key_i,value_i in multi.items():
+        new_exps=[]
+        for exp_j in exps:
+            utils.make_dir(exp_j.out_path)
+            exps_j=list(exp_j.iter_exp(key_i,value_i))
+            for exp_k in exps_j:
+                value_k=getattr(exp_k, key_i)
+                exp_k.out_path+=f"/{value_k}"
+                new_exps.append(exp_k)
+        exps=new_exps
+    return exps
