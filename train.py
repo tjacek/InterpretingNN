@@ -1,5 +1,15 @@
 import os.path
-import base,clf,dataset,deep,utils
+import base
+import clfs
+import dataset
+import utils
+#import deep
+
+class ResultDir(utils.DirProxy):
+    @property
+    def splits(self):
+        return self["splits"]
+    
 
 class PredDict(object):
     def __init__(self,df_dict):
@@ -14,40 +24,57 @@ class PredDict(object):
 
     def issubset(self, names):
         return set(names).issubset(self.df_dict.keys())
-#        for key_i in keys:
-#            if(not key_i in self.df_dict)
 
+#def basic_exp(in_path):
+#    for path_i in utils.top_files(in_path):
+#        splits_i=base.SplitGroup.make( data_i,
+#                                       n_repeats=1,
+#                                       n_splits=10)
+#        for clf_type_j in clf.TYPES:
+#            print(clf_type_j)
+#            results=splits_i(data_i,clf_type_j)
+#            print(results.get_acc())
 
-
-def basic_exp(in_path):
-    for path_i in utils.top_files(in_path):
+def make_pred( data_path,
+               dir_path,
+               clf_types=None):
+    if(clf_types is None):
+        clf_types=list(clfs.TYPES.keys())
+    dir_proxy=ResultDir(dir_path)
+    for id_i,path_i in utils.iter_files(data_path):
         data_i=dataset.read_csv(path_i)
-        splits_i=base.SplitGroup.make( data_i,
-                                       n_repeats=1,
-                                       n_splits=10)
-        for clf_type_j in clf.TYPES:
-            print(clf_type_j)
-            results=splits_i(data_i,clf_type_j)
-            print(results.get_acc())
+        split_path_i=f"{dir_proxy.splits}/{id_i}"
+        splits_i=get_splits(split_path_i,data_i)
+        print(split_path_i)
+    print(dir_proxy)
 
-def make_pred(in_path,out_path):
-    clf_types=[clf.RF,clf.GRAD,clf.LR,clf.SVM]
-    clf_types=[deep.TabPFN]
-    utils.make_dir(out_path)
-    for id_i,path_i in utils.iter_files(in_path):
-        print(path_i)
-        out_i=f"{out_path}/{id_i}"
-        utils.make_dir(out_i)
-        data_i=dataset.read_csv(path_i)
-        splits_i=get_splits(out_i,data_i)
-        for type_j in clf_types:
-            out_ij=f"{out_i}/{type_j.NAME}"
-            if(os.path.exists(out_ij)):
-                continue
-            utils.make_dir(out_ij)
-            results,_=splits_i(data_i,type_j)
-            results.save(f"{out_ij}/results")
-            print(results.get_acc())
+def get_splits(split_path,data):
+    split_cls=base.SplitGroup
+    if os.path.exists(split_path):
+        return split_cls.read(split_path)
+    else:
+        splits= split_cls.make( data,
+                                n_repeats=1,
+                                n_splits=10)
+        splits.save(split_path)
+    return splits
+#    clf_types=[clf.RF,clf.GRAD,clf.LR,clf.SVM]
+#    clf_types=[deep.TabPFN]
+#    utils.make_dir(out_path)
+#    for id_i,path_i in utils.iter_files(in_path):
+#        print(path_i)
+#        out_i=f"{out_path}/{id_i}"
+#        utils.make_dir(out_i)
+#        data_i=dataset.read_csv(path_i)
+#        splits_i=get_splits(out_i,data_i)
+#        for type_j in clf_types:
+#            out_ij=f"{out_i}/{type_j.NAME}"
+#            if(os.path.exists(out_ij)):
+#                continue
+#            utils.make_dir(out_ij)
+#            results,_=splits_i(data_i,type_j)
+#            results.save(f"{out_ij}/results")
+#            print(results.get_acc())
 
 def show_pred(in_path,verbose=True):
     reader=base.ResultGroup.read
@@ -71,19 +98,6 @@ def show_pred(in_path,verbose=True):
         df_dict[id_i]=df
     return PredDict(df_dict)
 
-def get_splits(in_path,data_i):
-    split_cls=base.SplitGroup
-    split_path=f"{in_path}/splits"
-    print(split_path)
-    if os.path.exists(split_path):
-        return split_cls.read(split_path)
-    else:
-        splits= split_cls.make( data_i,
-                               n_repeats=1,
-                               n_splits=10)
-        splits.save(split_path)
-    return splits
-
 def make_models(in_path,out_path):
     clf_type=deep.MLP
     for id_i,path_i in utils.iter_files(in_path):
@@ -101,6 +115,5 @@ def make_models(in_path,out_path):
         print(results.get_acc())
 
 if __name__ == '__main__':
-    make_pred("AutoML/data","AutoML/output")
-#    make_models("AutoML/data","AutoML/output")
-    show_pred(["AutoML/output","uci/output"])
+    make_pred("uci/s_data","uci")
+#    show_pred(["AutoML/output","uci/output"])

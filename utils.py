@@ -43,16 +43,36 @@ def find_paths(in_path,regex=r'^layer_\d+'):
     paths=sorted(paths,key=natural_keys)
     return paths
 
+def read_json(in_path):
+    with open(in_path) as json_data:
+        return SmartDict(json.load(json_data))
+
+class DirProxy(object):
+    def __init__(self,dir_path):
+        self.path=dir_path
+        make_dir(self.path)
+        self.files={}
+   
+    def subpath(self,key):
+        return f"{self.path}/{key}"
+
+    def __getitem__(self,key):
+        if(not key in self.files):
+            path=self.subpath(key)
+            make_dir(path)
+            self.files[key]=path
+        return self.files[key]
+
 class SmartDict(dict):
 
-    def remove(self,taboo):
-        if(not taboo):
-            return self
-
-        new_dict={ key_i:value_i
-                    for key_i,value_i in self.items()
-                        if(not key_i in taboo)}
-        return SmartDict(new_dict)
+    def split(self,pred):
+        pos,neg={},{}
+        for key_i,value_i in self.items():
+            if(pred(key_i,value_i)):
+                pos[key_i]=value_i
+            else:
+                neg[key_i]=value_i
+        return SmartDict(pos),SmartDict(neg)
 
     def select(self,pred):
         if(not pred):
@@ -64,9 +84,6 @@ class SmartDict(dict):
                         if(pred(key_i,value_i))}
         return SmartDict(new_dict)
 
-def read_json(in_path):
-    with open(in_path) as json_data:
-        return SmartDict(json.load(json_data))
 
 
 def out_iter(in_path,out_path):
