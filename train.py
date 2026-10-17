@@ -10,6 +10,9 @@ class ResultDir(utils.DirProxy):
     def splits(self):
         return self["splits"]
     
+    @property
+    def results(self):
+        return self["results"]
 
 class PredDict(object):
     def __init__(self,df_dict):
@@ -25,16 +28,6 @@ class PredDict(object):
     def issubset(self, names):
         return set(names).issubset(self.df_dict.keys())
 
-#def basic_exp(in_path):
-#    for path_i in utils.top_files(in_path):
-#        splits_i=base.SplitGroup.make( data_i,
-#                                       n_repeats=1,
-#                                       n_splits=10)
-#        for clf_type_j in clf.TYPES:
-#            print(clf_type_j)
-#            results=splits_i(data_i,clf_type_j)
-#            print(results.get_acc())
-
 def make_pred( data_path,
                dir_path,
                clf_types=None):
@@ -45,8 +38,13 @@ def make_pred( data_path,
         data_i=dataset.read_csv(path_i)
         split_path_i=f"{dir_proxy.splits}/{id_i}"
         splits_i=get_splits(split_path_i,data_i)
-        print(split_path_i)
-    print(dir_proxy)
+        result_path_i=f"{dir_proxy.results}/{id_i}"
+        utils.make_dir(result_path_i)
+        for type_j in clf_types:
+            print(type_j)
+            results,_=splits_i(data_i,type_j)
+            results.save(f"{result_path_i}/{type_j}")
+            print(results.acc)
 
 def get_splits(split_path,data):
     split_cls=base.SplitGroup
@@ -58,23 +56,6 @@ def get_splits(split_path,data):
                                 n_splits=10)
         splits.save(split_path)
     return splits
-#    clf_types=[clf.RF,clf.GRAD,clf.LR,clf.SVM]
-#    clf_types=[deep.TabPFN]
-#    utils.make_dir(out_path)
-#    for id_i,path_i in utils.iter_files(in_path):
-#        print(path_i)
-#        out_i=f"{out_path}/{id_i}"
-#        utils.make_dir(out_i)
-#        data_i=dataset.read_csv(path_i)
-#        splits_i=get_splits(out_i,data_i)
-#        for type_j in clf_types:
-#            out_ij=f"{out_i}/{type_j.NAME}"
-#            if(os.path.exists(out_ij)):
-#                continue
-#            utils.make_dir(out_ij)
-#            results,_=splits_i(data_i,type_j)
-#            results.save(f"{out_ij}/results")
-#            print(results.get_acc())
 
 def show_pred(in_path,verbose=True):
     reader=base.ResultGroup.read

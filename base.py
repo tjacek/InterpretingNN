@@ -2,6 +2,7 @@ import numpy as np
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score,f1_score
 from sklearn.model_selection import RepeatedStratifiedKFold
+import clfs
 import dataset,utils
 
 class SplitGroup(list):
@@ -10,6 +11,8 @@ class SplitGroup(list):
                   data,
                   clf_type,
                   verbose=True):
+        if(type(clf_type)==str):
+            clf_type=clfs.TYPES[clf_type]
         all_results,all_clfs=[],[]
         if(verbose):
             split_iter=tqdm(self)
