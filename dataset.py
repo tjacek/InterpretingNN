@@ -120,6 +120,8 @@ def make_df(helper,
             iterable,
             cols,
             multi=False):
+    if(helper is None):
+        helper=lambda x:x
     lines=[]
     if(multi):
         for arg_i in iterable:

@@ -3,7 +3,7 @@ import base
 import clfs
 import dataset
 import utils
-#import deep
+import argparse
 
 class ResultDir(utils.DirProxy):
     @property
@@ -27,6 +27,11 @@ class PredDict(object):
 
     def issubset(self, names):
         return set(names).issubset(self.df_dict.keys())
+
+    def diff(self,clf_x,clf_y):
+        x=self[clf_x]
+        y=self[clf_y]
+        return { data_i:x[data_i]-y[data_i] for data_i in x}
 
 def make_pred( data_path,
                dir_path,
@@ -57,44 +62,36 @@ def get_splits(split_path,data):
         splits.save(split_path)
     return splits
 
-def show_pred(in_path,verbose=True):
+def get_pred(dir_path,verbose=True):
     reader=base.ResultGroup.read
+    dir=ResultDir(dir_path)
     df_dict={}
-    for id_i,path_i in utils.iter_files(in_path):
-        paths=utils.filtered_files(path_i,"splits")
-        def helper(path_i):
-            clf_i=path_i.split("/")[-1]
-            result=reader(f"{path_i}/results")
-            return [id_i,clf_i,result.get_acc()]
-        df=dataset.make_df(helper,
-                           iterable=paths,
-                           cols=["data","clf","acc"])
-        acc=df["acc"].tolist()
+    for id_i,path_i in utils.iter_files(dir.results):
+        def helper(pair):
+            id_j,path_j=pair
+            result_j=reader(path_j)
+            return [id_i,id_j,result_j.acc]
+        df_i=dataset.make_df( helper=helper,
+                              iterable=utils.iter_files(path_i),
+                              cols=["data","clf","acc"])
+        acc=df_i["acc"].tolist()
         min_acc=min(acc)
         delta_acc= max(acc)-min_acc
-        df["norm_acc"]=df["acc"].apply(lambda acc: (acc-min_acc)/delta_acc)
-        df.sort_values(by="norm_acc",inplace=True)
+        df_i["norm_acc"]=df_i["acc"].apply(lambda acc: (acc-min_acc)/delta_acc)
+        df_i.sort_values(by="norm_acc",inplace=True)
         if(verbose):
-            print(df)
-        df_dict[id_i]=df
+            print(df_i)
+        df_dict[id_i]=df_i
     return PredDict(df_dict)
 
-def make_models(in_path,out_path):
-    clf_type=deep.MLP
-    for id_i,path_i in utils.iter_files(in_path):
-        out_i=f"{out_path}/{id_i}"
-        print(id_i)
-        data_i=dataset.read_csv(path_i)
-        splits_i=get_splits(out_i,data_i)
-        clf_path_i=f"{out_i}/{clf_type.NAME}"
-        utils.make_dir(clf_path_i)
-        results,clfs=splits_i(data_i,clf_type)
-        results.save(f"{clf_path_i}/results")
-        utils.make_dir(f"{clf_path_i}/models")
-        for j,clf_j in enumerate(clfs):
-            clf_j.save(f"{clf_path_i}/models/{j}")
-        print(results.get_acc())
-
 if __name__ == '__main__':
-    make_pred("uci/s_data","uci")
-#    show_pred(["AutoML/output","uci/output"])
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data", type=str, default="uci/s_data",)
+    parser.add_argument("--dir", type=str, default="uci")
+    parser.add_argument("--cmd", type=str, default="show")
+    args=parser.parse_args()
+    if(args.cmd=="make"):
+        make_pred(args.data,args.dir)
+    if(args.cmd=="show"):
+        pred_dict=get_pred(args.dir)
+        print(pred_dict.diff("RF","GRAD"))
