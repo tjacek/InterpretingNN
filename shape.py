@@ -9,6 +9,13 @@ import dataset
 import exp
 import utils
 
+class ShapleyMatrix(object):
+    def __init__( self,
+                  id,
+                  matrix):
+        self.id=id 
+        self.matrix
+
 def make_shap(shap_exp):
     data,splits=shap_exp.get_data()
     clf_type=shap_exp.get_clf()
@@ -28,7 +35,7 @@ def make_shap(shap_exp):
         shap_values = explainer(test_data)
         return shap_values.values
     print(shap_exp.out_path)
-    base.make_dir(shap_exp.out_path)
+    utils.make_dir(shap_exp.out_path)
     for i,split_i in enumerate(tqdm(splits)):
         out_i=f"{shap_exp.out_path}/{i}"
         clf_i,_=split_i.fit_clf(data,clf_type())
@@ -39,20 +46,21 @@ def make_shap(shap_exp):
 def compute_shapley(conf_path):
     conf=utils.read_json(conf_path)
     exps=exp.from_conf(conf)
-    for exp_i in exps:
-        print(exp_i)
+    for exp_i in tqdm(exps):
+        make_shap(exp_i)
+
+def show_shapley(conf_path):
+    conf=utils.read_json(conf_path)
+    print(conf)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--conf_path",type=str,default="uci/conf.json") 
     parser.add_argument("--regex", type=str,default=r"MLP_(.)+")
-    parser.add_argument("--cmd", type=str,default="compute")
+    parser.add_argument("--cmd", type=str,default="show")
     args=parser.parse_args()
     if(args.cmd=="compute"):
         compute_shapley(args.conf_path)
-#    if(args.cmd=="show"):
-#        show_shapley(  args.conf_path,
+    if(args.cmd=="show"):
+        show_shapley(  args.conf_path)
 #                       regex=args.regex)
-#    if(args.cmd=="var"):
-#        var_matrix( args.conf_path,
-#                    regex=args.regex)
