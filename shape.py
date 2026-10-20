@@ -14,7 +14,21 @@ class ShapleyMatrix(object):
                   id,
                   matrix):
         self.id=id 
-        self.matrix
+        self.matrix=matrix
+
+    def __str__(self):
+        return self.id
+    
+    def __repr__(self):
+        return self.id
+
+def read(in_path):
+    all_shap=[]
+    for id_i, path_j in utils.iter_files(in_path):
+        shap_j=np.load(path_j)["arr_0"]
+        all_shap.append(shap_j)
+    shap_arr=np.concatenate(all_shap,axis=0)
+    return np.mean(shap_arr,axis=0)
 
 def make_shap(shap_exp):
     data,splits=shap_exp.get_data()
@@ -51,7 +65,17 @@ def compute_shapley(conf_path):
 
 def show_shapley(conf_path):
     conf=utils.read_json(conf_path)
-    print(conf)
+    out_path=conf["out_path"]
+    paths=utils.bottom_files(out_path)
+    shap_matrices=[]
+    for path_i in paths:
+        id_i=path_i.replace(out_path,"")
+        id_i=id_i.replace("/","-")
+        shap_i=ShapleyMatrix(id=id_i,
+                             matrix=read(path_i))
+        shap_matrices.append(shap_i)
+    print(shap_matrices)
+    return shap_matrices
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -63,4 +87,3 @@ if __name__ == '__main__':
         compute_shapley(args.conf_path)
     if(args.cmd=="show"):
         show_shapley(  args.conf_path)
-#                       regex=args.regex)

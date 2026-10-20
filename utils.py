@@ -1,4 +1,3 @@
-import numpy as np
 import json
 import os,re
 
@@ -84,14 +83,12 @@ class SmartDict(dict):
                         if(pred(key_i,value_i))}
         return SmartDict(new_dict)
 
-
-
-def out_iter(in_path,out_path):
-    make_dir(out_path)
-    for in_i in top_files(in_path):
-        id_i=in_i.split("/")[-1]
-        out_i=f"{out_path}/{id_i}"
-        yield in_i,out_i
+def bottom_files(in_path):
+    bottom=[]
+    for root, dir, files in os.walk(in_path):
+        if(not dir):
+            bottom.append(root)
+    return bottom
 
 def dir_paths(in_path,out_path):
     make_dir(out_path)
@@ -109,11 +106,6 @@ def gini(arr):
 
     index = np.arange(1, n + 1)
     return np.sum((2*index - n - 1)*arr) / (n*total)
-
-def norm_matrix(arr):
-    arr-=np.mean(arr)
-    arr/=np.std(arr)
-    return arr
 
 def slice_list(arr,step=10):
     n_iters=int(np.ceil(len(arr) / step))
