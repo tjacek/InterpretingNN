@@ -63,7 +63,7 @@ def compute_shapley(conf_path):
     for exp_i in tqdm(exps):
         make_shap(exp_i)
 
-def show_shapley(conf_path):
+def get_shapley(conf_path):
     conf=utils.read_json(conf_path)
     out_path=conf["out_path"]
     paths=utils.bottom_files(out_path)
@@ -74,13 +74,17 @@ def show_shapley(conf_path):
         shap_i=ShapleyMatrix(id=id_i,
                              matrix=read(path_i))
         shap_matrices.append(shap_i)
-    print(shap_matrices)
     return shap_matrices
+
+def show_shapley(conf_path):
+    shap_matrices=get_shapley(conf_path)
+    for shap_i in shap_matrices:
+        plot.show_heatmap( shap_i.matrix,
+                           shap_i.id)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--conf_path",type=str,default="uci/conf.json") 
-    parser.add_argument("--regex", type=str,default=r"MLP_(.)+")
     parser.add_argument("--cmd", type=str,default="show")
     args=parser.parse_args()
     if(args.cmd=="compute"):
