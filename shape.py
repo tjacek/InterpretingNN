@@ -61,6 +61,7 @@ def compute_shapley(conf_path):
     conf=utils.read_json(conf_path)
     exps=exp.from_conf(conf)
     for exp_i in tqdm(exps):
+#        for exp_j in exp_i.by_data():
         make_shap(exp_i)
 
 def get_shapley(conf_path):
@@ -85,7 +86,7 @@ def show_shapley(conf_path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--conf_path",type=str,default="uci/conf.json") 
-    parser.add_argument("--cmd", type=str,default="show")
+    parser.add_argument("--cmd", type=str,default="compute")
     args=parser.parse_args()
     if(args.cmd=="compute"):
         compute_shapley(args.conf_path)
