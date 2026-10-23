@@ -6,6 +6,7 @@ from tqdm import tqdm
 import base
 import plot
 import dataset
+import dist
 import exp
 import utils
 
@@ -15,6 +16,12 @@ class ShapleyMatrix(object):
                   matrix):
         self.id=id 
         self.matrix=matrix
+    
+    def density(self):
+        points=self.matrix.flatten()
+        points-=np.mean(points)
+        points/=np.std(points)
+        return dist.EmpDist.make(points)
 
     def __str__(self):
         return self.id
@@ -61,7 +68,6 @@ def compute_shapley(conf_path):
     conf=utils.read_json(conf_path)
     exps=exp.from_conf(conf)
     for exp_i in tqdm(exps):
-#        for exp_j in exp_i.by_data():
         make_shap(exp_i)
 
 def get_shapley(conf_path):
@@ -83,12 +89,20 @@ def show_shapley(conf_path):
         plot.show_heatmap( shap_i.matrix,
                            shap_i.id)
 
+def dist_shapley(conf_path):
+    shap_matrices=get_shapley(conf_path)
+    for shap_i in shap_matrices:
+        dist_i=shap_i.density()
+        dist_i.plot()
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--conf_path",type=str,default="uci/conf.json") 
-    parser.add_argument("--cmd", type=str,default="compute")
+    parser.add_argument("--cmd", type=str,default="dist")
     args=parser.parse_args()
     if(args.cmd=="compute"):
         compute_shapley(args.conf_path)
     if(args.cmd=="show"):
         show_shapley(  args.conf_path)
+    if(args.cmd=="dist"):
+        dist_shapley(  args.conf_path)
