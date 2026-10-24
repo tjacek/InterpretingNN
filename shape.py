@@ -10,6 +10,29 @@ import dist
 import exp
 import utils
 
+class ShapleyGroup(dict):
+    def __iter__(self):
+        for value_i in self.values():
+            yield value_i
+    
+    def select(self,text):
+        s_dict={key_i:value_i
+                   for key_i,value_i in self.values()
+                    if(text in key_i)}
+        return ShapleyGroup(s_dict)
+
+    @classmethod 
+    def read(cls,in_path):
+        paths=utils.bottom_files(in_path)
+        shap_matrices={}
+        for path_i in paths:
+            id_i=path_i.replace(in_path,"")
+            id_i=id_i.replace("/","-")
+            shap_i=ShapleyMatrix( id=id_i,
+                                  matrix=read(path_i))
+            shap_matrices[id_i]=shap_i
+        return cls(shap_matrices)
+
 class ShapleyMatrix(object):
     def __init__( self,
                   id,
@@ -73,15 +96,7 @@ def compute_shapley(conf_path):
 def get_shapley(conf_path):
     conf=utils.read_json(conf_path)
     out_path=conf["out_path"]
-    paths=utils.bottom_files(out_path)
-    shap_matrices=[]
-    for path_i in paths:
-        id_i=path_i.replace(out_path,"")
-        id_i=id_i.replace("/","-")
-        shap_i=ShapleyMatrix(id=id_i,
-                             matrix=read(path_i))
-        shap_matrices.append(shap_i)
-    return shap_matrices
+    return ShapleyGroup.read(out_path)
 
 def show_shapley(conf_path):
     shap_matrices=get_shapley(conf_path)
@@ -93,7 +108,7 @@ def dist_shapley(conf_path):
     shap_matrices=get_shapley(conf_path)
     for shap_i in shap_matrices:
         dist_i=shap_i.density()
-        dist_i.plot()
+        dist_i.plot(shap_i.id)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
