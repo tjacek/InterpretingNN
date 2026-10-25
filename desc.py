@@ -2,8 +2,28 @@ import numpy as np
 from abc import ABC, abstractmethod
 from sklearn.decomposition import PCA
 from scipy.stats import pearsonr
+from dataclasses import dataclass
 import argparse
-import dataset,plot,shape,utils
+import dataset
+import shape
+import train
+import utils
+
+@dataclasses
+class Sources:
+    datasets:dict
+    shapley:dict
+    pred:dict
+    
+    def make(cls,conf):
+        paths=utils.iter_files(conf["data_path"])
+        datasets={ id_i:dataset.read_csv(path_i) 
+                   for id_i,path_i in paths}
+        shapley=shap.ShapleyGroup.read(conf["out_path"])
+        pred=train.get_pred(conf_dict["result_path"])
+        return cls( datasets,
+                    shapley,
+                    pred)
 
 class GruopOfFeature(object):
     def __init__(self,features):
@@ -44,20 +64,6 @@ class Basic(Feature):
         data_params=data.params
         return data_params.to_list()
 
-class PcaFeats(Feature):
-    def names(self):
-        return ["pca_max","pca_95"]
-
-    def __call__(self,arg_dict):
-        data=arg_dict["data"]
-        pca = PCA(n_components=None)
-        pca.fit(data.X)
-        exp_var=pca.explained_variance_ratio_
-        greatest=exp_var[0]
-        cum_var=np.cumsum(exp_var)
-        int_var=(cum_var>0.95).astype(int)
-        thres_var= np.argmax(int_var)/cum_var.shape[0]
-        return [greatest,thres_var]
 
 class IR(Feature):
     def __init__( self,log=False):
@@ -237,7 +243,6 @@ if __name__ == '__main__':
     parser.add_argument("--conf", type=str,default="matrix/conf.json")
     parser.add_argument("--order", type=str,default="Infl(shapley)")
     parser.add_argument("--out", type=str,default=None)#"desc/infl3")
-#    features_list=[Basic(),Infl("ablat"),Infl("shapley")]#,IR(True)]
     features_list=[Basic(),#FeatInfl("ablat"),FeatInfl("shapley"),
                     Infl("ablat"),Infl("shapley")]
 #    features_list=[Basic(),CorlSize()]
