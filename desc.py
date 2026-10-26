@@ -9,18 +9,19 @@ import shape
 import train
 import utils
 
-@dataclasses
+@dataclass
 class Sources:
     datasets:dict
     shapley:dict
     pred:dict
     
+    @classmethod
     def make(cls,conf):
         paths=utils.iter_files(conf["data_path"])
         datasets={ id_i:dataset.read_csv(path_i) 
                    for id_i,path_i in paths}
-        shapley=shap.ShapleyGroup.read(conf["out_path"])
-        pred=train.get_pred(conf_dict["result_path"])
+        shapley=shape.ShapleyGroup.read(conf["out_path"])
+        pred=train.get_pred(conf["result_path"])
         return cls( datasets,
                     shapley,
                     pred)
@@ -188,24 +189,28 @@ class CorlSize(Feature):
                    y_label="gini")
         return np.amax(x)
 
-def make_desc( conf_path,
-               features_list=None,
-               order_by="feats",
-               out_path=None):
+def make_desc( conf_path):
     conf_dict=utils.read_json(conf_path)
-    args_dict=get_arg_dicts(conf_dict["data"],
-                             conf_dict["sources"])
-    if(features_list is None):
-        features_list=[Basic(),PcaFeats(),IR(),GINI()]
-    features= GruopOfFeature(features_list)
-    df=dataset.make_df( helper=features,
-                        iterable=args_dict,
-                        cols=features.names(),
-                        multi=False)
-    df.sort_values(by=order_by,inplace=True)
-    print(df.round(4))
-    if(out_path):
-        df.to_csv(out_path, sep=",", index=False)
+    sources= Sources.make(conf_dict)
+    print(sources)
+#def make_desc( conf_path,
+#               features_list=None,
+#               order_by="feats",
+#               out_path=None):
+#    conf_dict=utils.read_json(conf_path)
+#    args_dict=get_arg_dicts(conf_dict["data"],
+#                             conf_dict["sources"])
+#    if(features_list is None):
+#        features_list=[Basic(),PcaFeats(),IR(),GINI()]
+#    features= GruopOfFeature(features_list)
+#    df=dataset.make_df( helper=features,
+#                        iterable=args_dict,
+#                        cols=features.names(),
+#                        multi=False)
+#    df.sort_values(by=order_by,inplace=True)
+#    print(df.round(4))
+#    if(out_path):
+#        df.to_csv(out_path, sep=",", index=False)
 
 def get_arg_dicts(data_path,sources):
     data=dataset.get_data_dict(data_path)
@@ -231,24 +236,15 @@ def plot_xy(x_path,y_path):
                       title=key_i, 
                       x_label=x_path,
                       y_label=y_path)
-
-def transpose(in_path,out_path):
-    utils.make_dir(out_path)
-    mat_dict=plot.get_matrix_dict(in_path)
-    for name_i,mat_i in mat_dict.items():
-        np.savetxt(f'{out_path}/{name_i}', mat_i.T, fmt='%f')
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--conf", type=str,default="matrix/conf.json")
+    parser.add_argument("--conf", type=str,default="uci/conf.json")
     parser.add_argument("--order", type=str,default="Infl(shapley)")
     parser.add_argument("--out", type=str,default=None)#"desc/infl3")
     features_list=[Basic(),#FeatInfl("ablat"),FeatInfl("shapley"),
                     Infl("ablat"),Infl("shapley")]
-#    features_list=[Basic(),CorlSize()]
     args=parser.parse_args()
-    make_desc( args.conf,
-               features_list=features_list,
-               order_by=args.order,
-               out_path=args.out)
-#    transpose("matrix/shapley","matrix/shapley_")
+    make_desc( args.conf)#,
+#               features_list=features_list,
+#               order_by=args.order,
+#               out_path=args.out)
