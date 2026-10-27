@@ -14,7 +14,7 @@ class Sources:
     datasets:dict
     shapley:dict
     pred:dict
-    
+
     @classmethod
     def make(cls,conf):
         paths=utils.iter_files(conf["data_path"])
@@ -27,26 +27,41 @@ class Sources:
                     pred)
 
 class GruopOfFeature(object):
-    def __init__(self,features):
+    def __init__( self,
+                  features,
+                  sources):
         self.features=features
+        self.sources=sources
 
     def names(self):
         names=["data"]
         for feature_i in self.features:
             names_i= feature_i.names()   
-            if(not isinstance(names_i, list)):
-                names_i=[names_i]
-            names.extend(names_i)
+            if( isinstance(names_i, list)):
+                names.extend(names_i)
+            else:
+                names.append(names_i)
         return names
 
-    def __call__(self,arg_dict):
-        values=[arg_dict["id"]]
+    def data(self):
+        return self.sources.datasets.keys()
+
+    def __call__(self,id):
+        values=[id]
         for feature_i in self.features:
-            values_i= feature_i(arg_dict)   
-            if(not isinstance(values_i, list)):
-                values_i=[values_i]
-            values.extend(values_i)
-        return values
+            value_i=feature_i(id,self.sources)
+            if(isinstance(value_i, list)):
+                values.extend(value_i)
+            else:
+                values.append(value_i)
+        return values    
+#        values=[arg_dict["id"]]
+#        for feature_i in self.features:
+#            values_i= feature_i(arg_dict)   
+#            if(not isinstance(values_i, list)):
+#                values_i=[values_i]
+#            values.extend(values_i)
+#        return values
 
 class Feature(ABC):
     def names(self):
@@ -58,12 +73,14 @@ class Feature(ABC):
 
 class Basic(Feature):
     def names(self):
-        return ["classes","samples", "feats" ]
+        return ["feats","samples", "classes"]
 
-    def __call__(self,arg_dict):
-        data=arg_dict["data"]
-        data_params=data.params
-        return data_params.to_list()
+    def __call__(self,data_id,sources):
+        data=sources.datasets[data_id]
+        return data.params().to_list()
+#        data=arg_dict["data"]
+#        data_params=data.params
+#        return data_params.to_list()
 
 
 class IR(Feature):
@@ -189,10 +206,18 @@ class CorlSize(Feature):
                    y_label="gini")
         return np.amax(x)
 
-def make_desc( conf_path):
+def make_desc( conf_path,
+               features_list=None):
     conf_dict=utils.read_json(conf_path)
     sources= Sources.make(conf_dict)
-    print(sources)
+    if(features_list is None):
+        features_list=[Basic()]
+    features= GruopOfFeature(features_list,sources)
+    df=dataset.make_df( helper=features,
+                        iterable=features.data(),
+                        cols=features.names(),
+                        multi=False)
+    print(df.round(4))
 #def make_desc( conf_path,
 #               features_list=None,
 #               order_by="feats",
