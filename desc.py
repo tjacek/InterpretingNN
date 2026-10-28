@@ -55,13 +55,6 @@ class GruopOfFeature(object):
             else:
                 values.append(value_i)
         return values    
-#        values=[arg_dict["id"]]
-#        for feature_i in self.features:
-#            values_i= feature_i(arg_dict)   
-#            if(not isinstance(values_i, list)):
-#                values_i=[values_i]
-#            values.extend(values_i)
-#        return values
 
 class Feature(ABC):
     def names(self):
@@ -78,26 +71,25 @@ class Basic(Feature):
     def __call__(self,data_id,sources):
         data=sources.datasets[data_id]
         return data.params().to_list()
-#        data=arg_dict["data"]
-#        data_params=data.params
-#        return data_params.to_list()
-
 
 class IR(Feature):
-    def __init__( self,log=False):
-        self.log=log
-
-    def __str__(self):
+    def names(self):
         return "IR"
 
-    def __call__(self,arg_dict):
-        data=arg_dict["data"]
-        data_params=data.params
-        sizes=data_params.sizes()
-        ir= max(sizes)/min(sizes)
-        if(self.log):
-            return np.log(ir)
-        return ir
+    def __call__(self,data_id,sources):
+        data=sources.datasets[data_id]
+        return data.params().IR()
+
+class Shapley(Feature):
+    def names(self):
+        return "shapley"
+
+    def __call__( self,
+                  data_id,
+                  sources):
+        shap=sources.shapley
+        shap.select("RF").by_id(data_id)
+        raise Exception(shap)
 
 class GINI(Feature):
     def __str__(self):
@@ -108,16 +100,6 @@ class GINI(Feature):
         data_params=data.params()
         return utils.gini(data_params.sizes())
 
-class Shapley(Feature):
-    def __str__(self):
-        return "shapley"
-
-    def __call__(self,arg_dict):
-        values=arg_dict["shapley"]
-        values=np.abs(values)
-        values/=np.sum(values,axis=0)
-        values=np.amax(values,axis=0)
-        return utils.gini(values)
 
 class Corel(Feature):
     def __str__(self):
@@ -211,7 +193,7 @@ def make_desc( conf_path,
     conf_dict=utils.read_json(conf_path)
     sources= Sources.make(conf_dict)
     if(features_list is None):
-        features_list=[Basic()]
+        features_list=[Basic(),IR(),Shapley()]
     features= GruopOfFeature(features_list,sources)
     df=dataset.make_df( helper=features,
                         iterable=features.data(),
@@ -266,8 +248,6 @@ if __name__ == '__main__':
     parser.add_argument("--conf", type=str,default="uci/conf.json")
     parser.add_argument("--order", type=str,default="Infl(shapley)")
     parser.add_argument("--out", type=str,default=None)#"desc/infl3")
-    features_list=[Basic(),#FeatInfl("ablat"),FeatInfl("shapley"),
-                    Infl("ablat"),Infl("shapley")]
     args=parser.parse_args()
     make_desc( args.conf)#,
 #               features_list=features_list,

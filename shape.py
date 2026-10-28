@@ -17,9 +17,14 @@ class ShapleyGroup(dict):
     
     def select(self,text):
         s_dict={key_i:value_i
-                   for key_i,value_i in self.values()
+                   for key_i,value_i in self.items()
                     if(text in key_i)}
         return ShapleyGroup(s_dict)
+
+    def by_id(self,data_id):
+        for key_i,value_i in self.items():
+            if( data_id in key_i):
+                return value_i 
 
     @classmethod 
     def read(cls,in_path):
