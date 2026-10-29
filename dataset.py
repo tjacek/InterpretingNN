@@ -36,7 +36,8 @@ class Dataset(object):
             X_test,y_test=self.X[test_index],self.y[test_index]
         y_pred=clf.predict(X_test)
         return base.Result(y_pred,y_test)
-
+    
+    @property
     def params(self):
         if(self._params is None):
             self._params= DatasetParams( self.dim(),

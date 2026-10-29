@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.neighbors import KernelDensity
+from scipy.stats import kurtosis
 import matplotlib.pyplot as plt
 
 class EmpDist:
@@ -18,8 +19,12 @@ class EmpDist:
 		y=np.exp(kde.score_samples(x))
 		return cls(x,y)
 
-	def plot(self):
-		plt.plot(self.values, self.density, label="title")
+	def plot(self,title=""):
+		plt.plot(self.values, self.density)
+		plt.title(title)
 		plt.xlabel("Values")
 		plt.ylabel("Density")
 		plt.show()
+
+	def kurt(self):
+		return kurtosis(self.density)

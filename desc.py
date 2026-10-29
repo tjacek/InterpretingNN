@@ -57,12 +57,19 @@ class GruopOfFeature(object):
         return values    
 
 class Feature(ABC):
+    @abstractmethod
     def names(self):
-        return str(self)
+        pass
    
     @abstractmethod
-    def __call__(self,data):
+    def __call__(self,data_id,sources):
         pass
+
+    def __repr__(self):
+        names=self.names()
+        if(type(names)==list):
+            names="-".join(names)
+        return names
 
 class Basic(Feature):
     def names(self):
@@ -70,7 +77,7 @@ class Basic(Feature):
 
     def __call__(self,data_id,sources):
         data=sources.datasets[data_id]
-        return data.params().to_list()
+        return data.params.to_list()
 
 class IR(Feature):
     def names(self):
@@ -78,122 +85,49 @@ class IR(Feature):
 
     def __call__(self,data_id,sources):
         data=sources.datasets[data_id]
-        return data.params().IR()
+        return data.params.IR()
 
 class Shapley(Feature):
+    def __init__(self,clf="RF"):
+        self.clf=clf
+
     def names(self):
-        return "shapley"
+        return f"shapley({self.clf})"
 
     def __call__( self,
                   data_id,
                   sources):
         shap=sources.shapley
-        shap.select("RF").by_id(data_id)
-        raise Exception(shap)
+        shap_matrix=shap.select(self.clf).by_id(data_id)
+        dist= shap_matrix.density()
+        return dist.kurt()
 
 class GINI(Feature):
-    def __str__(self):
+    def names(self):
         return "gini"
 
-    def __call__(self,arg_dict):
-        data=arg_dict["data"]
-        data_params=data.params()
-        return utils.gini(data_params.sizes())
+    def __call__( self,
+                  data_id,
+                  sources):
+        data=sources.datasets[data_id]
+        return gini(data.params.sizes())
 
+def gini(arr):
+    arr = np.sort(np.asarray(arr))
+    n = len(arr)
+    total = np.sum(arr)
+    if total == 0:
+        return 0.0
+    index = np.arange(1, n + 1)
+    return np.sum((2*index - n - 1)*arr) / (n*total)
 
-class Corel(Feature):
-    def __str__(self):
-        return "corel"
-    
-    def __call__(self,arg_dict):
-        shapley=arg_dict["shapley"]
-        ablat=arg_dict["ablat"]
-        x=shapley.flatten()
-        y=ablat.flatten()
-        r, p = pearsonr(x, y)
-        if(np.isnan(r)):
-            r=0.0
-        return r
-
-class Infl(Feature):
-    def __init__( self,
-                  infl_type="ablat",
-                  scale=True):
-        self.infl_type=infl_type
-        self.scale=scale
-    
-    def __str__(self):
-        return f"Infl({self.infl_type})"
-
-    def __call__(self,arg_dict):
-        data=arg_dict["data"]
-        infl=arg_dict[self.infl_type]
-
-        params=data.params
-        if(params.cats<3):
-            return 0.0
-        min_index=params.min_cls()
-        infl_i= infl[min_index,:]
-        print(arg_dict["id"])
-        print(infl_i)
-        value = utils.gini(np.abs(infl_i))
-        if(self.scale):
-            min_size=params.sizes_dict[min_index]
-            prop=  params.avrage_size()/min_size
-            return value*prop
-        return value
-
-class FeatInfl(Feature):
-    def __init__( self,
-                  infl_type="ablat"):
-        self.infl_type=infl_type
-
-    def __str__(self):
-        return f"FeatInfl({self.infl_type})"   
-     
-    def __call__(self,arg_dict):
-        data=arg_dict["data"]
-        infl=arg_dict[self.infl_type]
-        if(data.params.cats==2):
-            return 0
-        min_index=data.params.min_cls()
-        cls_min=infl[min_index,:]
-        max_index=np.argmax(cls_min)
-        feat_max=infl[:,max_index]
-        print(feat_max.shape)
-        
-        min_size=data.params.sizes_dict[min_index]
-        prop=  np.log(data.params.samples)
-        prop/=min_size
-        return prop*utils.gini(np.abs(feat_max))
-
-class CorlSize(Feature):
-    def __str__(self):
-        return f"CorlSize"
-
-    def __call__(self,arg_dict):
-        data=arg_dict["data"]
-        infl=arg_dict["ablat"]
-        params=data.params
-        if(params.cats==2):
-            return 0
-        x= [ params.sizes_dict[i]/params.samples 
-                  for i in range(params.cats)]
-        y=[utils.ineq(np.abs(x_i),"L") for x_i in infl]
-
-        print(y)
-        r,p=plot.plot_xy( x,y,
-                   title=arg_dict["id"], 
-                   x_label="size",
-                   y_label="gini")
-        return np.amax(x)
 
 def make_desc( conf_path,
                features_list=None):
     conf_dict=utils.read_json(conf_path)
     sources= Sources.make(conf_dict)
     if(features_list is None):
-        features_list=[Basic(),IR(),Shapley()]
+        features_list=[Basic(),IR(),GINI(),Shapley()]
     features= GruopOfFeature(features_list,sources)
     df=dataset.make_df( helper=features,
                         iterable=features.data(),
@@ -218,20 +152,6 @@ def make_desc( conf_path,
 #    print(df.round(4))
 #    if(out_path):
 #        df.to_csv(out_path, sep=",", index=False)
-
-def get_arg_dicts(data_path,sources):
-    data=dataset.get_data_dict(data_path)
-    source_dicts={"data":data} 
-    for type_i,path_i in sources:
-        source_dicts[type_i]=plot.get_matrix_dict(path_i)
-    arg_dicts=[]
-    for id_i in data:
-        arg_i={"id":id_i}
-        for key_i,source_i in source_dicts.items():
-            arg_i[key_i]=source_i[id_i]
-        arg_dicts.append(arg_i)
-    return arg_dicts
-
 
 def plot_xy(x_path,y_path):
     x_dict=plot.get_matrix_dict(x_path)

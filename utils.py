@@ -97,15 +97,6 @@ def dir_paths(in_path,out_path):
         yield path_i,f"{out_path}/{id_i}"
 
 
-def gini(arr):
-    arr = np.sort(np.asarray(arr))
-    n = len(arr)
-    total = np.sum(arr)
-    if total == 0:
-        return 0.0
-
-    index = np.arange(1, n + 1)
-    return np.sum((2*index - n - 1)*arr) / (n*total)
 
 def slice_list(arr,step=10):
     n_iters=int(np.ceil(len(arr) / step))
@@ -123,14 +114,3 @@ def dir_fun(fun):
             else:
                 fun(path_i)
     return helper
-
-
-
-def ineq(x,method="gini"):
-    if(method=="gini"):
-        return utils.gini(x)
-    if(method=="CV"):
-        return np.std(x)/np.mean(x)
-    if(method=="L"):
-        return np.amax(x)/np.sum(x)
-    return 0
