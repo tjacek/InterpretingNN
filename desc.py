@@ -21,7 +21,7 @@ class Sources:
         datasets={ id_i:dataset.read_csv(path_i) 
                    for id_i,path_i in paths}
         shapley=shape.ShapleyGroup.read(conf["out_path"])
-        pred=train.get_pred(conf["result_path"])
+        pred=train.get_pred(conf["result_path"],verbose=True)
         return cls( datasets,
                     shapley,
                     pred)
@@ -79,6 +79,21 @@ class Basic(Feature):
         data=sources.datasets[data_id]
         return data.params.to_list()
 
+class Target(Feature):
+    def __init__( self,
+                  clf_x="RF",
+                  clf_y="TabPFN"):
+       self.clf_x=clf_x
+       self.clf_y=clf_y
+
+    def names(self):
+        return "target"
+    
+    def __call__(self,data_id,sources):
+        diff=sources.pred.diff( self.clf_x, 
+                                self.clf_y)
+        return diff[data_id]
+
 class IR(Feature):
     def names(self):
         return "IR"
@@ -127,7 +142,8 @@ def make_desc( conf_path,
     conf_dict=utils.read_json(conf_path)
     sources= Sources.make(conf_dict)
     if(features_list is None):
-        features_list=[Basic(),IR(),GINI(),Shapley()]
+        features_list=[ Basic(),IR(),GINI(),Shapley(),
+                        Target()]
     features= GruopOfFeature(features_list,sources)
     df=dataset.make_df( helper=features,
                         iterable=features.data(),

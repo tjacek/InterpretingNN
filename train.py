@@ -14,13 +14,11 @@ class ResultDir(utils.DirProxy):
     def results(self):
         return self["results"]
 
-class PredDict(object):
-    def __init__(self,df_dict):
-        self.df_dict=df_dict
+class PredDict(dict):
 
-    def __getitem__(self,clf):
+    def by_clf(self,clf):
         clf_dict={}
-        for name_i,df_i in self.df_dict.items():
+        for name_i,df_i in self.items():
             acc = df_i.set_index("clf")["norm_acc"]
             clf_dict[name_i]=acc[clf]
         return clf_dict
@@ -29,8 +27,8 @@ class PredDict(object):
         return set(names).issubset(self.df_dict.keys())
 
     def diff(self,clf_x,clf_y):
-        x=self[clf_x]
-        y=self[clf_y]
+        x=self.by_clf(clf_x)
+        y=self.by_clf(clf_y)
         return { data_i:x[data_i]-y[data_i] for data_i in x}
 
 def make_pred( data_path,
@@ -64,9 +62,11 @@ def get_splits(split_path,data):
 
 def get_pred(dir_path,verbose=True):
     reader=base.ResultGroup.read
-    dir=ResultDir(dir_path)
+    paths=list(utils.iter_files(dir_path))
+    if(not paths):
+        raise Exception(f"{dir_path} is empty")
     df_dict={}
-    for id_i,path_i in utils.iter_files(dir.results):
+    for id_i,path_i in paths:
         def helper(pair):
             id_j,path_j=pair
             result_j=reader(path_j)
@@ -90,8 +90,8 @@ if __name__ == '__main__':
     parser.add_argument("--dir", type=str, default="uci")
     parser.add_argument("--cmd", type=str, default="show")
     args=parser.parse_args()
+    dir=ResultDir(args.dir)
     if(args.cmd=="make"):
         make_pred(args.data,args.dir)
     if(args.cmd=="show"):
-        pred_dict=get_pred(args.dir)
-        print(pred_dict.diff("RF","GRAD"))
+        pred_dict=get_pred(dir.results,verbose=True)
