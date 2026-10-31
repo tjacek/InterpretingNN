@@ -102,21 +102,6 @@ class IR(Feature):
         data=sources.datasets[data_id]
         return data.params.IR()
 
-class Shapley(Feature):
-    def __init__(self,clf="RF"):
-        self.clf=clf
-
-    def names(self):
-        return f"shapley({self.clf})"
-
-    def __call__( self,
-                  data_id,
-                  sources):
-        shap=sources.shapley
-        shap_matrix=shap.select(self.clf).by_id(data_id)
-        dist= shap_matrix.density()
-        return dist.kurt()
-
 class GINI(Feature):
     def names(self):
         return "gini"
@@ -136,38 +121,59 @@ def gini(arr):
     index = np.arange(1, n + 1)
     return np.sum((2*index - n - 1)*arr) / (n*total)
 
+class Shapley(Feature):
+    def __init__(self,clf="RF"):
+        self.clf=clf
+
+    def names(self):
+        return f"shapley({self.clf})"
+
+    def __call__( self,
+                  data_id,
+                  sources):
+        shap=sources.shapley
+        shap_matrix=shap.select(self.clf).by_id(data_id)
+        dist= shap_matrix.density()
+        return dist.kurt()
+
+class ShapCorl(Feature):
+    def __init__( self,
+                  x_clf="RF",
+                  y_clf="GRAD"):
+        self.x_clf=x_clf
+        self.y_clf=y_clf
+
+    def names(self):
+        return f"Corl({self.x_clf}/{self.y_clf})"
+    
+    def __call__( self,
+                  data_id,
+                  sources):
+        shap=sources.shapley
+        matrix_x=shap.select(self.x_clf).by_id(data_id)
+        matrix_y=shap.select(self.y_clf).by_id(data_id)
+        r, p = pearsonr( matrix_x.to_arr(), 
+                         matrix_y.to_arr())
+        return r
 
 def make_desc( conf_path,
-               features_list=None):
+               features_list=None,
+               order_by="feats",
+               out_path=None):
     conf_dict=utils.read_json(conf_path)
     sources= Sources.make(conf_dict)
     if(features_list is None):
         features_list=[ Basic(),IR(),GINI(),Shapley(),
-                        Target()]
+                        ShapCorl(),Target()]
     features= GruopOfFeature(features_list,sources)
     df=dataset.make_df( helper=features,
                         iterable=features.data(),
                         cols=features.names(),
                         multi=False)
+    df.sort_values(by=order_by,inplace=True)
     print(df.round(4))
-#def make_desc( conf_path,
-#               features_list=None,
-#               order_by="feats",
-#               out_path=None):
-#    conf_dict=utils.read_json(conf_path)
-#    args_dict=get_arg_dicts(conf_dict["data"],
-#                             conf_dict["sources"])
-#    if(features_list is None):
-#        features_list=[Basic(),PcaFeats(),IR(),GINI()]
-#    features= GruopOfFeature(features_list)
-#    df=dataset.make_df( helper=features,
-#                        iterable=args_dict,
-#                        cols=features.names(),
-#                        multi=False)
-#    df.sort_values(by=order_by,inplace=True)
-#    print(df.round(4))
-#    if(out_path):
-#        df.to_csv(out_path, sep=",", index=False)
+    if(out_path):
+        df.to_csv(out_path, sep=",", index=False)
 
 def plot_xy(x_path,y_path):
     x_dict=plot.get_matrix_dict(x_path)
