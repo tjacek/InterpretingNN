@@ -2,6 +2,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 from sklearn.decomposition import PCA
 from scipy.stats import pearsonr
+from sklearn.linear_model import LinearRegression
 from dataclasses import dataclass
 import argparse
 import dataset
@@ -156,6 +157,33 @@ class ShapCorl(Feature):
                          matrix_y.to_arr())
         return r
 
+class ShapResuid(Feature):
+    def __init__( self,
+                  x_clf="RF",
+                  y_clf="GRAD"):
+        self.x_clf=x_clf
+        self.y_clf=y_clf
+
+    def names(self):
+        return f"Resuid({self.x_clf}/{self.y_clf})"
+    
+    def __call__( self,
+                  data_id,
+                  sources):
+        shap=sources.shapley
+        matrix_x=shap.select(self.x_clf).by_id(data_id)
+        matrix_y=shap.select(self.y_clf).by_id(data_id)
+        model=LinearRegression()
+        x=matrix_y.to_arr()
+        y=matrix_x.to_arr()
+        x=x.reshape(-1, 1) 
+        y=y.reshape(-1, 1) 
+        model.fit(x, y)      
+        y_pred = model.predict(x)
+        res=y-y_pred
+        res=(res-np.mean(res))/np.std(res)      
+        return np.amax(res)
+
 def make_desc( conf_path,
                features_list=None,
                order_by="feats",
@@ -164,7 +192,7 @@ def make_desc( conf_path,
     sources= Sources.make(conf_dict)
     if(features_list is None):
         features_list=[ Basic(),IR(),GINI(),Shapley(),
-                        ShapCorl(),Target()]
+                        ShapCorl(),ShapResuid(),Target()]
     features= GruopOfFeature(features_list,sources)
     df=dataset.make_df( helper=features,
                         iterable=features.data(),
