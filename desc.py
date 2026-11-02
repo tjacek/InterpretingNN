@@ -216,10 +216,10 @@ def plot_xy(x_path,y_path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--conf", type=str,default="uci/conf.json")
-    parser.add_argument("--order", type=str,default="Infl(shapley)")
+    parser.add_argument("--order", type=str,default="classes")
     parser.add_argument("--out", type=str,default=None)#"desc/infl3")
     args=parser.parse_args()
-    make_desc( args.conf)#,
+    make_desc( args.conf,
 #               features_list=features_list,
-#               order_by=args.order,
-#               out_path=args.out)
+               order_by=args.order,
+               out_path=args.out)

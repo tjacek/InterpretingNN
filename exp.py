@@ -46,6 +46,8 @@ class ExpParams:
 
 def from_conf( conf_dict):
     multi,single=conf_dict.split(lambda k,v: type(v)==list)
+    if("result_path" in single):
+        del single["result_path"]
     exp=ExpParams(**single)
     base_exps=exp.data_iter()
     all_exps=[]
