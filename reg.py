@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import argparse
 from sklearn.linear_model import LinearRegression
 from dataclasses import dataclass,field
@@ -23,15 +24,16 @@ class DescDataset(object):
 		return X,y
 
 @dataclass
-class LinearAlg(object):
-    coef: float  = field(default_factory=list)
+class RegOutput(object):
+    names: list
+    y_true: list 
+    y_pred: list 
+    
+    def mse(self):
+        error=self.y_true - self.y_pred
+        print(error**2)
+        return np.sqrt(np.mean(error**2))
 
-    def fit(self,train_i,test_i):
-        reg_i = LinearRegression()
-        reg_i.fit(train_i.X,train_i.y)
-        mean_i= reg_i.predict(test_i.X)
-        self.coef.append(reg_i.coef_)
-        return mean_i
 
 def regression(desc_path):
     df=pd.read_csv(desc_path)
@@ -42,6 +44,12 @@ def regression(desc_path):
     for feat_i,coef_i in zip(desc.feats(),reg.coef_):
         print(feat_i)
         print(coef_i)
+    y_pred=reg.predict(X)
+    output=RegOutput( df["data"].to_list(),
+                      y,
+                      y_pred)
+    print("****")
+    print(output.mse())
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
