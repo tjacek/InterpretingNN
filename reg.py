@@ -22,6 +22,28 @@ class DescDataset(object):
 		X=feat_df.to_numpy()
 		y=self.df[self.target].to_numpy()
 		return X,y
+    
+    def leve_one_out(self):
+        self.df = self.df.reset_index(drop=True)
+        for i in range(len(self.df)):
+            train_df = df.drop(i)
+            test_df = df.iloc[[i]]
+
+            X_train = train_df.drop(columns=[self.target, "data"]).to_numpy()
+            y_train = train_df[self.target].to_numpy()
+        
+            X_test = test_df.drop(columns=[self.target, "data"]).to_numpy()
+            y_test = test_df[self.target].iloc[0]
+        
+            train = dataset.Dataset(X_train, y_train)
+            test = dataset.Dataset(X_test, y_test)
+
+            data_i = test_df["data"].iloc[0]
+#            if(norm):
+#                scaler = StandardScaler()
+#                train.X = scaler.fit_transform(train.X)
+#                test.X = scaler.transform(test.X)
+            yield train,test,data_i 
 
 @dataclass
 class RegOutput(object):
