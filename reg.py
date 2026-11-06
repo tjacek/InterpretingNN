@@ -3,36 +3,37 @@ import numpy as np
 import argparse
 from sklearn.linear_model import LinearRegression
 from dataclasses import dataclass,field
+import dataset 
 
 class DescDataset(object):
-	def __init__( self,
+    def __init__( self,
 		          df,
 		          target="target"):
-		self.df=df
-		self.target=target
+        self.df=df
+        self.target=target
     
-	def feats(self):
-		taboo=set(["data",self.target])
-		return [ col_i
+    def feats(self):
+        taboo=set(["data",self.target])
+        return [ col_i
 		         for col_i in self.df.columns
 		             if(not col_i in taboo)]
     
-	def to_array(self):
-		feat_df=self.df[self.feats()]
-		X=feat_df.to_numpy()
-		y=self.df[self.target].to_numpy()
-		return X,y
-    
+    def to_array(self):
+        feat_df=self.df[self.feats()]
+        X=feat_df.to_numpy()
+        y=self.df[self.target].to_numpy()
+        return X,y
+  
     def leve_one_out(self):
         self.df = self.df.reset_index(drop=True)
         for i in range(len(self.df)):
-            train_df = df.drop(i)
-            test_df = df.iloc[[i]]
-
-            X_train = train_df.drop(columns=[self.target, "data"]).to_numpy()
+            train_df = self.df.drop(i)
+            test_df = self.df.iloc[[i]]
+            cols=[self.target, "data"]
+            X_train = train_df.drop(columns=cols).to_numpy()
             y_train = train_df[self.target].to_numpy()
         
-            X_test = test_df.drop(columns=[self.target, "data"]).to_numpy()
+            X_test = test_df.drop(columns=cols).to_numpy()
             y_test = test_df[self.target].iloc[0]
         
             train = dataset.Dataset(X_train, y_train)
@@ -56,22 +57,34 @@ class RegOutput(object):
         print(error**2)
         return np.sqrt(np.mean(error**2))
 
+class RegAlg:
+    def __init__(self):
+        self.reg= None#LinearRegression()
+
+    def exp(self,train,test):
+        self.reg = LinearRegression()
+        self.reg.fit(train.X,train.y)
+        y_pred=self.reg.predict(test.X)
+        return y_pred,test.y
+
+    def show(self,feats):
+        for feat_i,coef_i in zip(feats,self.reg.coef_):
+            print(feat_i)
+            print(coef_i)
 
 def regression(desc_path):
     df=pd.read_csv(desc_path)
     desc=DescDataset(df)
-    X,y=desc.to_array()
-    reg = LinearRegression()
-    reg.fit(X,y)
-    for feat_i,coef_i in zip(desc.feats(),reg.coef_):
-        print(feat_i)
-        print(coef_i)
-    y_pred=reg.predict(X)
-    output=RegOutput( df["data"].to_list(),
-                      y,
-                      y_pred)
-    print("****")
-    print(output.mse())
+    alg=RegAlg()
+    for train_i,test_i,data_i in desc.leve_one_out():
+        y_pred,y_true=alg.exp(train_i,test_i)
+        print(f"{data_i},{y_pred},{y_true}")
+#    X,y=desc.to_array()
+
+#    output=RegOutput( df["data"].to_list(),
+#                      y,
+#                      y_pred)
+#    print(output.mse())
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
