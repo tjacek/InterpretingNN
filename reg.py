@@ -56,10 +56,16 @@ class RegOutput(object):
         error=self.y_true - self.y_pred
         print(error**2)
         return np.sqrt(np.mean(error**2))
+    
+    def show(self):
+        for i,name_i in enumerate(self.names):
+            pred_i=self.y_pred[i]
+            true_i=self.y_true[i]
+            print(f"{name_i},{pred_i:.4f},{true_i:.4f}")
 
 class RegAlg:
     def __init__(self):
-        self.reg= None#LinearRegression()
+        self.reg= None
 
     def exp(self,train,test):
         self.reg = LinearRegression()
@@ -78,7 +84,7 @@ def regression(desc_path):
     alg=RegAlg()
     for train_i,test_i,data_i in desc.leve_one_out():
         y_pred,y_true=alg.exp(train_i,test_i)
-        print(f"{data_i},{y_pred},{y_true}")
+    
 #    X,y=desc.to_array()
 
 #    output=RegOutput( df["data"].to_list(),
