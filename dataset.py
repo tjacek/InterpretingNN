@@ -105,6 +105,24 @@ class DatasetParams:
         sizes=self.sizes()
         return max(sizes)/min(sizes)
 
+@dataclass
+class DatasetPair:
+    train:Dataset 
+    test:Dataset
+    
+    def norm(self):
+        scaler = StandardScaler()
+        self.train.X = scaler.fit_transform(self.train.X)
+        self.test.X = scaler.transform(self.test.X)
+    
+    @classmethod
+    def make( cls,
+              X_train, y_train,
+              X_test, y_test):
+        train = dataset.Dataset(X_train, y_train)
+        test = dataset.Dataset(X_test, y_test)
+        return cls(train,test)
+
 def read_csv(in_path:str):
     if(type(in_path)==tuple):
         X,y=in_path
