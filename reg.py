@@ -23,8 +23,10 @@ class DescDataset(object):
         X=feat_df.to_numpy()
         y=self.df[self.target].to_numpy()
         return X,y
-  
+
+
     def leve_one_out(self):
+        make_pairs=dataset.DatasetPair.make
         self.df = self.df.reset_index(drop=True)
         for i in range(len(self.df)):
             train_df = self.df.drop(i)
@@ -35,16 +37,16 @@ class DescDataset(object):
         
             X_test = test_df.drop(columns=cols).to_numpy()
             y_test = test_df[self.target].iloc[0]
-        
-            train = dataset.Dataset(X_train, y_train)
-            test = dataset.Dataset(X_test, y_test)
+            
+            pairs=make_pairs(X_train, y_train,
+                       X_test, y_test)
+#            train = dataset.Dataset(X_train, y_train)
+#            test = dataset.Dataset(X_test, y_test)
 
             data_i = test_df["data"].iloc[0]
 #            if(norm):
-#                scaler = StandardScaler()
-#                train.X = scaler.fit_transform(train.X)
-#                test.X = scaler.transform(test.X)
-            yield train,test,data_i 
+#                
+            yield pairs,data_i 
 
 @dataclass
 class RegOutput(object):
@@ -61,7 +63,7 @@ class RegOutput(object):
         for i,name_i in enumerate(self.names):
             pred_i=self.y_pred[i]
             true_i=self.y_true[i]
-            print(f"{name_i},{pred_i:.4f},{true_i:.4f}")
+            print(f"{name_i},pred:{pred_i:.4f},true_i{true_i:.4f}")
 
 class RegAlg:
     def __init__(self):
@@ -82,15 +84,18 @@ def regression(desc_path):
     df=pd.read_csv(desc_path)
     desc=DescDataset(df)
     alg=RegAlg()
-    for train_i,test_i,data_i in desc.leve_one_out():
-        y_pred,y_true=alg.exp(train_i,test_i)
-    
-#    X,y=desc.to_array()
-
-#    output=RegOutput( df["data"].to_list(),
-#                      y,
-#                      y_pred)
-#    print(output.mse())
+    names,y_true,y_pred=[],[],[]
+    for pairs_i,data_i in desc.leve_one_out():
+        pred_i,true_i=alg.exp(pairs_i.train,
+                              pairs_i.test)
+        names.append(data_i)
+        y_true.append(true_i)
+        y_pred.append(pred_i[0])
+    output=RegOutput( names,
+                      np.array(y_true),
+                      np.array(y_pred))
+    output.show()
+    print(output.mse())
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
