@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn import preprocessing
 from dataclasses import dataclass
+from sklearn.preprocessing import StandardScaler
 import base,utils
 
 class Dataset(object):
@@ -119,8 +120,8 @@ class DatasetPair:
     def make( cls,
               X_train, y_train,
               X_test, y_test):
-        train = dataset.Dataset(X_train, y_train)
-        test = dataset.Dataset(X_test, y_test)
+        train = Dataset(X_train, y_train)
+        test = Dataset(X_test, y_test)
         return cls(train,test)
 
 def read_csv(in_path:str):
