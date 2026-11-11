@@ -11,6 +11,10 @@ class DescDataset(object):
 		          target="target"):
         self.df=df
         self.target=target
+
+    @classmethod
+    def read(cls,desc_path):
+        return cls(pd.read_csv(desc_path))
     
     def feats(self):
         taboo=set(["data",self.target])
@@ -66,6 +70,10 @@ class RegOutput(object):
 class RegAlg:
     def __init__(self):
         self.reg= None
+    
+    def fit(self,X,y):
+        self.reg = LinearRegression()
+        self.reg.fit(X,y)
 
     def exp(self,train,test):
         self.reg = LinearRegression()
@@ -75,12 +83,10 @@ class RegAlg:
 
     def show(self,feats):
         for feat_i,coef_i in zip(feats,self.reg.coef_):
-            print(feat_i)
-            print(coef_i)
+            print(f"{feat_i},{coef_i:.4f}")
 
 def regression(desc_path):
-    df=pd.read_csv(desc_path)
-    desc=DescDataset(df)
+    desc=DescDataset.read(desc_path)
     alg=RegAlg()
     names,y_true,y_pred=[],[],[]
     for pairs_i,data_i in desc.leve_one_out():
@@ -96,9 +102,16 @@ def regression(desc_path):
     print(output.as_df())
     print(output.mse())
 
+def linear_reg(desc_path):
+    desc=DescDataset.read(desc_path)
+    alg=RegAlg()
+    X,y=desc.to_array()
+    alg.fit(X,y)
+    alg.show(desc.feats())
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--alg_type", type=str,default="logistic")
     parser.add_argument("--desc", type=str,default="uci/desc.txt")
     args=parser.parse_args()
-    regression( args.desc)
+    linear_reg( args.desc)
