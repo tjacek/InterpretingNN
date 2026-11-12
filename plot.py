@@ -9,9 +9,10 @@ def show_heatmap( matrix,
                 annot=False)#,
     plt.title(title)
     if(out_path):
-        out_i=f"{out_path}/{title}"
         plt.tight_layout()
-        plt.savefig(out_i,dpi=300, bbox_inches="tight")
+        plt.savefig( out_path,
+                     dpi=300, 
+                     bbox_inches="tight")
         plt.close()
     else:
         plt.show()

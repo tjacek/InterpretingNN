@@ -50,6 +50,9 @@ class ShapleyMatrix(object):
         points-=np.mean(points)
         points/=np.std(points)
         return dist.EmpDist.make(points)
+    
+    def to_arr(self):
+        return self.matrix.flatten()
 
     def __str__(self):
         return self.id
@@ -103,26 +106,42 @@ def get_shapley(conf_path):
     out_path=conf["out_path"]
     return ShapleyGroup.read(out_path)
 
-def show_shapley(conf_path):
+def show_shapley( conf_path,
+                  img_path,
+                  img_type):
     shap_matrices=get_shapley(conf_path)
+    if(img_type=="dist"):
+        fun=dist_matrix
+    else:
+        fun=shap_matrix
+    utils.make_dir(img_path)
     for shap_i in shap_matrices:
-        plot.show_heatmap( shap_i.matrix,
-                           shap_i.id)
+        out_i=f"{img_path}/{shap_i.id}"
+        fun(shap_i,out_i)
 
-def dist_shapley(conf_path):
-    shap_matrices=get_shapley(conf_path)
-    for shap_i in shap_matrices:
-        dist_i=shap_i.density()
-        dist_i.plot(shap_i.id)
+def shap_matrix(shap_i,out_i):
+    plot.show_heatmap( shap_i.matrix,
+                       shap_i.id,
+                       out_i)
+
+def dist_matrix(shap_i,out_i):
+    dist_i=shap_i.density()
+    plt=dist_i.plot(shap_i.id)
+    plt.savefig( out_i,
+                 dpi=300, 
+                 bbox_inches="tight")
+    plt.close()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--conf_path",type=str,default="uci/conf.json") 
-    parser.add_argument("--cmd", type=str,default="dist")
+    parser.add_argument("--conf_path",type=str,default="uci/conf.json")
+    parser.add_argument("--img_path",type=str,default="uci/dists") 
+    parser.add_argument("--img_type",type=str,default="dist") 
+    parser.add_argument("--cmd", type=str,default="show")
     args=parser.parse_args()
     if(args.cmd=="compute"):
         compute_shapley(args.conf_path)
     if(args.cmd=="show"):
-        show_shapley(  args.conf_path)
-    if(args.cmd=="dist"):
-        dist_shapley(  args.conf_path)
+        show_shapley( args.conf_path,
+                      args.img_path,
+                      args.img_type)
