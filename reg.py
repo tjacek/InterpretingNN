@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import argparse
 from sklearn.linear_model import LinearRegression
+from sklearn.gaussian_process import GaussianProcessRegressor
 from dataclasses import dataclass,field
 import dataset 
 
@@ -67,7 +68,7 @@ class RegOutput(object):
             true_i=self.y_true[i]
             print(f"{name_i},pred:{pred_i:.4f},true_i{true_i:.4f}")
 
-class RegAlg:
+class LinearAlg:
     def __init__(self):
         self.reg= None
     
@@ -84,6 +85,20 @@ class RegAlg:
     def show(self,feats):
         for feat_i,coef_i in zip(feats,self.reg.coef_):
             print(f"{feat_i},{coef_i:.4f}")
+
+class GaussAlg:
+    def __init__(self):
+        kernel =  RBF(length_scale=1.0, 
+                      length_scale_bounds=(1e-2, 1e2))
+        self.reg = GaussianProcessRegressor(kernel=kernel, 
+                                            n_restarts_optimizer=9)
+    def fit(self,X,y):
+        self.reg.fit(X,y)
+
+    def exp(self,train,test):
+        self.reg.fit(train.X,train.y)
+        y_pred=self.reg.predict(test.X)
+        return y_pred,test.y
 
 def regression(desc_path):
     desc=DescDataset.read(desc_path)
