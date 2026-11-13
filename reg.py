@@ -3,6 +3,7 @@ import numpy as np
 import argparse
 from sklearn.linear_model import LinearRegression
 from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF
 from dataclasses import dataclass,field
 import dataset 
 
@@ -70,17 +71,17 @@ class RegOutput(object):
 
 class LinearAlg:
     def __init__(self):
-        self.reg= None
+        self.reg= LinearRegression()
     
     def fit(self,X,y):
-        self.reg = LinearRegression()
         self.reg.fit(X,y)
-
-    def exp(self,train,test):
-        self.reg = LinearRegression()
-        self.reg.fit(train.X,train.y)
-        y_pred=self.reg.predict(test.X)
-        return y_pred,test.y
+    
+    @classmethod
+    def exp(cls,train,test):
+        reg=cls()
+        reg.fit(train.X,train.y)
+        y_pred=reg.reg.predict(test.X)
+        return reg,(y_pred[0],test.y)
 
     def show(self,feats):
         for feat_i,coef_i in zip(feats,self.reg.coef_):
@@ -94,23 +95,26 @@ class GaussAlg:
                                             n_restarts_optimizer=9)
     def fit(self,X,y):
         self.reg.fit(X,y)
-
-    def exp(self,train,test):
-        self.reg.fit(train.X,train.y)
-        y_pred=self.reg.predict(test.X)
-        return y_pred,test.y
+    
+    @classmethod
+    def exp(cls,train,test):
+        reg=cls()
+        reg.fit(train.X,train.y)
+        y_pred=reg.reg.predict(test.X)
+        return reg,(y_pred[0],test.y)
 
 def regression(desc_path):
     desc=DescDataset.read(desc_path)
-    alg=RegAlg()
-    names,y_true,y_pred=[],[],[]
+    alg=GaussAlg
+    names,models,results=[],[],[]
     for pairs_i,data_i in desc.leve_one_out():
         pairs_i.norm()
-        pred_i,true_i=alg.exp(pairs_i.train,
+        model_i,result_i=alg.exp(pairs_i.train,
                               pairs_i.test)
         names.append(data_i)
-        y_true.append(true_i)
-        y_pred.append(pred_i[0])
+        models.append(model_i)
+        results.append(result_i)
+    y_pred,y_true=list(zip(*results))
     output=RegOutput( names,
                       np.array(y_true),
                       np.array(y_pred))
@@ -129,4 +133,4 @@ if __name__ == '__main__':
     parser.add_argument("--alg_type", type=str,default="logistic")
     parser.add_argument("--desc", type=str,default="uci/desc.txt")
     args=parser.parse_args()
-    linear_reg( args.desc)
+    regression( args.desc)
