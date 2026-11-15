@@ -17,18 +17,27 @@ class EmpDist:
 		kde.fit(points)
 		x=np.linspace(-range,range, num=50).reshape(-1, 1)
 		y=np.exp(kde.score_samples(x))
-		return cls(x,y)
+		return cls(x.flatten(),y)
 
 	def plot( self,
 		      title="",
-		      out_path=None):
-		plt.plot(self.values, self.density)
+		      out_path=None,
+		      type=None):
+		if(type=="pos"):
+			pos=(self.values>0)
+			x=np.log(self.values[pos])
+			y=np.log(self.density[pos])
+		elif(type=="neg"):
+			neg=(self.values<0)
+			x=np.log(self.values[neg])
+			y=np.log(self.density[neg])	
+		else:
+			x,y=self.values,self.density
+		plt.plot(x,y)
 		plt.title(title)
 		plt.xlabel("Values")
 		plt.ylabel("Density")
 		return plt
-#		if(out_path):
-#		plt.show()
 
 	def kurt(self):
 		return kurtosis(self.density)
