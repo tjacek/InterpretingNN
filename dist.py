@@ -18,21 +18,20 @@ class EmpDist:
 		x=np.linspace(-range,range, num=50).reshape(-1, 1)
 		y=np.exp(kde.score_samples(x))
 		return cls(x.flatten(),y)
+    
+    def __call__(self,type=None):
+    	if(type=="pos"):
+			return self.pos_log()
+		elif(type=="neg"):
+			return self.neg_log()
+		else:
+			return self.values,self.density
 
 	def plot( self,
 		      title="",
 		      out_path=None,
 		      type=None):
-		if(type=="pos"):
-			pos=(self.values>0)
-			x=np.log(self.values[pos])
-			y=np.log(self.density[pos])
-		elif(type=="neg"):
-			neg=(self.values<0)
-			x=np.log(self.values[neg])
-			y=np.log(self.density[neg])	
-		else:
-			x,y=self.values,self.density
+		x,y=self(type)
 		plt.plot(x,y)
 		plt.title(title)
 		plt.xlabel("Values")
@@ -41,3 +40,15 @@ class EmpDist:
 
 	def kurt(self):
 		return kurtosis(self.density)
+
+	def pos_log(self):
+		pos=(self.values>0)
+		x=np.log(self.values[pos])
+		y=np.log(self.density[pos])
+		return x,y
+
+	def neg_log(self):
+		neg=(self.values<0)
+		x=np.log(self.values[neg])
+		y=np.log(self.density[neg])	
+		return x,y
