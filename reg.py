@@ -123,7 +123,7 @@ def regression(desc_path):
 
 def linear_reg(desc_path):
     desc=DescDataset.read(desc_path)
-    alg=RegAlg()
+    alg=LinearAlg()
     X,y=desc.to_array()
     alg.fit(X,y)
     alg.show(desc.feats())
@@ -133,4 +133,4 @@ if __name__ == '__main__':
     parser.add_argument("--alg_type", type=str,default="logistic")
     parser.add_argument("--desc", type=str,default="uci/desc.txt")
     args=parser.parse_args()
-    regression( args.desc)
+    linear_reg( args.desc)

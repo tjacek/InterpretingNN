@@ -122,12 +122,12 @@ def gini(arr):
     index = np.arange(1, n + 1)
     return np.sum((2*index - n - 1)*arr) / (n*total)
 
-class Shapley(Feature):
+class ShapKurtosis(Feature):
     def __init__(self,clf="RF"):
         self.clf=clf
 
     def names(self):
-        return f"shapley({self.clf})"
+        return f"kurtosis({self.clf})"
 
     def __call__( self,
                   data_id,
@@ -191,8 +191,10 @@ def make_desc( conf_path,
     conf_dict=utils.read_json(conf_path)
     sources= Sources.make(conf_dict)
     if(features_list is None):
-        features_list=[ Basic(),IR(),GINI(),Shapley(),
-                        ShapCorl(),ShapResuid(),Target()]
+        features_list=[ Basic(),IR(),GINI(),
+                        ShapKurtosis("RF"),
+                        ShapCorl("RF","TabPFN"),
+                        ShapResuid("RF","TabPFN"),Target()]
     features= GruopOfFeature(features_list,sources)
     df=dataset.make_df( helper=features,
                         iterable=features.data(),
@@ -216,8 +218,8 @@ def plot_xy(x_path,y_path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--conf", type=str,default="uci/conf.json")
-    parser.add_argument("--order", type=str,default="classes")
-    parser.add_argument("--out", type=str,default=None)#"desc/infl3")
+    parser.add_argument("--order", type=str,default="target")
+    parser.add_argument("--out", type=str,default="uci/desc.txt")
     args=parser.parse_args()
     make_desc( args.conf,
 #               features_list=features_list,
