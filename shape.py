@@ -126,7 +126,7 @@ def shap_matrix(shap_i,out_i):
 
 def dist_matrix( shap_i,
                  out_i,
-                 plot_type="pos"):
+                 plot_type="fourrier"):
     dist_i=shap_i.density()
     plt=dist_i.plot( shap_i.id,
                      type=plot_type)
@@ -138,7 +138,7 @@ def dist_matrix( shap_i,
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--conf_path",type=str,default="uci/conf.json")
-    parser.add_argument("--img_path",type=str,default="uci/log") 
+    parser.add_argument("--img_path",type=str,default="uci/fourrier") 
     parser.add_argument("--img_type",type=str,default="dist") 
     parser.add_argument("--cmd", type=str,default="show")
     args=parser.parse_args()

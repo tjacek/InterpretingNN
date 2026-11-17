@@ -86,7 +86,7 @@ def get_pred(dir_path,verbose=True):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data", type=str, default="uci/s_data",)
+    parser.add_argument("--data", type=str, default="uci/next",)
     parser.add_argument("--dir", type=str, default="uci")
     parser.add_argument("--cmd", type=str, default="show")
     args=parser.parse_args()

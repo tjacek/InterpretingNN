@@ -19,11 +19,13 @@ class EmpDist:
 		y=np.exp(kde.score_samples(x))
 		return cls(x.flatten(),y)
     
-    def __call__(self,type=None):
-    	if(type=="pos"):
+	def __call__(self,type=None):
+		if(type=="pos"):
 			return self.pos_log()
 		elif(type=="neg"):
 			return self.neg_log()
+		elif(type=="fourrier"):
+			return self.fourrier()
 		else:
 			return self.values,self.density
 
@@ -52,3 +54,17 @@ class EmpDist:
 		x=np.log(self.values[neg])
 		y=np.log(self.density[neg])	
 		return x,y
+
+	def fourrier(self):
+		f = np.asarray(self.density, dtype=float)
+		N = len(f)
+		F = np.fft.rfft(f)
+		freqs = np.fft.rfftfreq(N, d=1)
+		amp = np.abs(F) / N
+		if N % 2 == 0:
+#			x=self.values[1:-1]
+			amp[1:-1] *= 2
+		else:
+#			x=self.values[1:]
+			amp[1:] *= 2
+		return freqs,amp
