@@ -15,16 +15,23 @@ class ShapleyGroup(dict):
         for value_i in self.values():
             yield value_i
     
+    def datasets(self):
+        raw=[]
+        for shap_i in self.values():
+            raw.append(shap_i.data)
+        return list(set(raw))
+    
     def select(self,text):
-        s_dict={key_i:value_i
+        return [value_i
                    for key_i,value_i in self.items()
-                    if(text in key_i)}
-        return ShapleyGroup(s_dict)
+                    if(text in key_i)]
+        return s_dict
 
-    def by_id(self,data_id):
-        for key_i,value_i in self.items():
-            if( data_id in key_i):
-                return value_i 
+    def by_data(self):
+        data_dict={}
+        for data_i in self.datasets():
+            data_dict[data_i]=self.select(data_i)
+        return data_dict
 
     @classmethod 
     def read(cls,in_path):
@@ -32,17 +39,21 @@ class ShapleyGroup(dict):
         shap_matrices={}
         for path_i in paths:
             id_i=path_i.replace(in_path,"")
-            id_i=id_i.replace("/","-")
-            shap_i=ShapleyMatrix( id=id_i,
+            data,clf=id_i.split("/")
+            shap_i=ShapleyMatrix( data=data,
+                                  clf=clf,
                                   matrix=read(path_i))
-            shap_matrices[id_i]=shap_i
+            shap_matrices[shap_i.id]=shap_i
         return cls(shap_matrices)
 
 class ShapleyMatrix(object):
     def __init__( self,
-                  id,
+                  data,
+                  clf,
                   matrix):
-        self.id=id 
+        self.data=data 
+        self.clf=clf
+        self.id=f"{data}_{clf}" 
         self.matrix=matrix
     
     def density(self):
@@ -110,6 +121,7 @@ def show_shapley( conf_path,
                   img_path,
                   img_type):
     shap_matrices=get_shapley(conf_path)
+    raise Exception(shap_matrices.by_data())
     if(img_type=="dist"):
         fun=dist_matrix
     else:
