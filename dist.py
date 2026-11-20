@@ -62,9 +62,20 @@ class EmpDist:
 		freqs = np.fft.rfftfreq(N, d=1)
 		amp = np.abs(F) / N
 		if N % 2 == 0:
-#			x=self.values[1:-1]
 			amp[1:-1] *= 2
 		else:
-#			x=self.values[1:]
 			amp[1:] *= 2
 		return freqs,amp
+
+
+def plot_multi( title,
+	            shapes):
+	for shap_i in shapes:
+		dist_i=shap_i.density()
+		x,y=dist_i()
+		plt.plot(x,y,label=shap_i.clf)
+	plt.title(title)
+	plt.xlabel("Values")
+	plt.ylabel("Density")
+	plt.legend()
+	return plt

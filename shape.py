@@ -121,6 +121,12 @@ def show_shapley( conf_path,
                   img_path,
                   img_type):
     shap_matrices=get_shapley(conf_path)
+    data_shape=shap_matrices.by_data()
+    for data_i,value_i in data_shape.items():
+        plot=dist.plot_multi( data_i,
+                              value_i)
+        plot.show()
+        print(data_i)
     raise Exception(shap_matrices.by_data())
     if(img_type=="dist"):
         fun=dist_matrix
