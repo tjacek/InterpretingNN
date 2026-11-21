@@ -69,11 +69,14 @@ class EmpDist:
 
 
 def plot_multi( title,
-	            shapes):
+	            shapes,
+	            plot_type=None):
 	for shap_i in shapes:
 		dist_i=shap_i.density()
-		x,y=dist_i()
+		x,y=dist_i(plot_type)
 		plt.plot(x,y,label=shap_i.clf)
+	if(plot_type):
+		title=f"{title}({plot_type})"
 	plt.title(title)
 	plt.xlabel("Values")
 	plt.ylabel("Density")

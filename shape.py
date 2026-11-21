@@ -119,12 +119,13 @@ def get_shapley(conf_path):
 
 def show_shapley( conf_path,
                   img_path,
-                  img_type):
+                  plot_type):
     shap_matrices=get_shapley(conf_path)
     data_shape=shap_matrices.by_data()
     for data_i,value_i in data_shape.items():
         plot=dist.plot_multi( data_i,
-                              value_i)
+                              value_i,
+                              plot_type=plot_type)
         plot.show()
         print(data_i)
     raise Exception(shap_matrices.by_data())
@@ -157,7 +158,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--conf_path",type=str,default="uci/conf.json")
     parser.add_argument("--img_path",type=str,default="uci/fourrier") 
-    parser.add_argument("--img_type",type=str,default="dist") 
+    parser.add_argument("--img_type",type=str,default="fourrier") 
     parser.add_argument("--cmd", type=str,default="show")
     args=parser.parse_args()
     if(args.cmd=="compute"):
