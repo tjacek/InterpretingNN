@@ -22,10 +22,12 @@ class ShapleyGroup(dict):
         return list(set(raw))
     
     def select(self,text):
+        def cond(key):
+            data=key.split("_")[0]
+            return data==text
         return [value_i
                    for key_i,value_i in self.items()
-                    if(text in key_i)]
-        return s_dict
+                       if(cond(key_i))]
 
     def by_data(self):
         data_dict={}
