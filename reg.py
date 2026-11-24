@@ -4,6 +4,7 @@ import argparse
 from sklearn.linear_model import LinearRegression
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
+from scipy.stats import pearsonr
 from dataclasses import dataclass,field
 import dataset 
 
@@ -30,7 +31,6 @@ class DescDataset(object):
         y=self.df[self.target].to_numpy()
         return X,y
 
-
     def leve_one_out(self):
         make_pairs=dataset.DatasetPair.make
         self.df = self.df.reset_index(drop=True)
@@ -48,6 +48,18 @@ class DescDataset(object):
                        X_test, y_test)
             data_i = test_df["data"].iloc[0]
             yield pairs,data_i 
+
+
+    def corl(self):
+#        self.df.corr()
+        print(self.df.columns)
+        taboo=set(['data',self.target])
+        arr_target=self.df[self.target].to_list()
+        for name_i, series_i in self.df.items():
+            if(not name_i in taboo):
+                arr_i=series_i.to_list()
+                r,p=pearsonr(arr_i,arr_target)
+                print(f"{name_i},{r:.4f},{p:.4f}")
 
 @dataclass
 class RegOutput(object):
@@ -123,6 +135,7 @@ def regression(desc_path):
 
 def linear_reg(desc_path):
     desc=DescDataset.read(desc_path)
+    desc.corl()
     alg=LinearAlg()
     X,y=desc.to_array()
     alg.fit(X,y)
