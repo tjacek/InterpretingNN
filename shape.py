@@ -124,25 +124,29 @@ def show_shapley( conf_path,
                   plot_type):
     shap_matrices=get_shapley(conf_path)
     data_shape=shap_matrices.by_data()
-    if(img_path):
-        utils.make_dir(img_path)
-    for data_i,value_i in data_shape.items():
-        plot=dist.plot_multi( data_i,
+    def helper(data_i,value_i):
+        return dist.plot_multi( data_i,
                               value_i,
                               plot_type=plot_type)
-        if(img_path):
-            out_i=f"{img_path}/{data_i}"
+    plot_decor( iter=data_shape.items(),
+                fun=helper,
+                out_path=img_path)
+
+def plot_decor( iter,
+                fun,
+                out_path):
+    if(out_path):
+        utils.make_dir(out_path)
+    for id_i,value_i in iter:
+        plot=fun(id_i,value_i)
+        if(out_path):
+            out_i=f"{out_path}/{id_i}"
             plot.savefig( out_i,
                          dpi=300, 
                          bbox_inches="tight")
             plot.clf()
         else:
             plot.show()
-#    if(img_type=="dist"):
-#        fun=dist_matrix
-#    else:
-#        fun=shap_matrix
-
 
 def _shap_matrix(shap_i,out_i):
     plot.show_heatmap( shap_i.matrix,
@@ -163,7 +167,7 @@ def _dist_matrix( shap_i,
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--conf_path",type=str,default="uci/conf.json")
-    parser.add_argument("--img_path",type=str,default="uci/dist") 
+    parser.add_argument("--img_path",type=str,default=None) 
     parser.add_argument("--img_type",type=str,default="dist") 
     parser.add_argument("--cmd", type=str,default="show")
     args=parser.parse_args()
