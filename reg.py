@@ -6,6 +6,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 from scipy.stats import pearsonr
 from dataclasses import dataclass,field
+from sklearn.decomposition import PCA
 import dataset 
 
 class DescDataset(object):
@@ -49,10 +50,7 @@ class DescDataset(object):
             data_i = test_df["data"].iloc[0]
             yield pairs,data_i 
 
-
     def corl(self):
-#        self.df.corr()
-        print(self.df.columns)
         taboo=set(['data',self.target])
         arr_target=self.df[self.target].to_list()
         for name_i, series_i in self.df.items():
@@ -60,6 +58,12 @@ class DescDataset(object):
                 arr_i=series_i.to_list()
                 r,p=pearsonr(arr_i,arr_target)
                 print(f"{name_i},{r:.4f},{p:.4f}")
+
+    def pca(self):
+        pca = PCA()
+        X,y=self.to_array()
+        pca.fit(X)
+        print(pca.explained_variance_ratio_)
 
 @dataclass
 class RegOutput(object):
@@ -135,7 +139,7 @@ def regression(desc_path):
 
 def linear_reg(desc_path):
     desc=DescDataset.read(desc_path)
-    desc.corl()
+    desc.pca()
     alg=LinearAlg()
     X,y=desc.to_array()
     alg.fit(X,y)
