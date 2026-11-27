@@ -15,19 +15,23 @@ class DescDataset(object):
 		          target="target"):
         self.df=df
         self.target=target
-
+        self._feats=None
+        
     @classmethod
     def read(cls,desc_path):
         return cls(pd.read_csv(desc_path))
     
+    @property
     def feats(self):
-        taboo=set(["data",self.target])
-        return [ col_i
-		         for col_i in self.df.columns
-		             if(not col_i in taboo)]
-    
+        if(not self._feats):
+            taboo=set(["data",self.target])
+            self._feats=[ col_i
+		                  for col_i in self.df.columns
+		                      if(not col_i in taboo)]
+        return self._feats
+
     def to_array(self):
-        feat_df=self.df[self.feats()]
+        feat_df=self.df[self.feats]
         X=feat_df.to_numpy()
         y=self.df[self.target].to_numpy()
         return X,y
@@ -64,6 +68,11 @@ class DescDataset(object):
         X,y=self.to_array()
         pca.fit(X)
         print(pca.explained_variance_ratio_)
+        def helper(i):
+            for i,cord_i in enumerate(pca.components_[i]):
+                print(f"{self.feats[i]},{cord_i:.4f}")
+        helper(0)
+        helper(1)
 
 @dataclass
 class RegOutput(object):
@@ -143,7 +152,7 @@ def linear_reg(desc_path):
     alg=LinearAlg()
     X,y=desc.to_array()
     alg.fit(X,y)
-    alg.show(desc.feats())
+    alg.show(desc.feats)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
