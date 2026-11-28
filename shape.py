@@ -148,21 +148,10 @@ def plot_decor( iter,
         else:
             plot.show()
 
-def _shap_matrix(shap_i,out_i):
-    plot.show_heatmap( shap_i.matrix,
-                       shap_i.id,
-                       out_i)
-
-def _dist_matrix( shap_i,
-                 out_i,
-                 plot_type="fourrier"):
-    dist_i=shap_i.density()
-    plt=dist_i.plot( shap_i.id,
-                     type=plot_type)
-    plt.savefig( out_i,
-                 dpi=300, 
-                 bbox_inches="tight")
-    plt.close()
+def shap_matrix(data_i,shape_i):
+    return plot.show_heatmap( shape_i.matrix,
+                              title=data_i,
+                              out_path=None)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
